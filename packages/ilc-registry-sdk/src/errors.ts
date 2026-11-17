@@ -5,6 +5,8 @@ export type RegistryErrorCode =
     | 'too-large'
     /** The Registry did not accept the credentials: log in, or provide a valid token */
     | 'login-required'
+    /** The Registry refused the CLI login: the authorize redirect or the token endpoint answered with an OAuth error */
+    | 'login-failed'
     /** The Registry refused to sign the value; the message says why */
     | 'refused'
     /** Over the per-user signing rate limit */

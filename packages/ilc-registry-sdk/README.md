@@ -53,10 +53,11 @@ When no cookies can be produced, the call throws a `RegistryError` whose `code` 
 | ------------------ | ----------------------------------------------------------------------------- |
 | `invalid-override` | Not a JSON object, or with keys other than `apps`, `routes` and `sharedLibs`. |
 | `too-large`        | Does not fit the cookie even compressed.                                      |
-| `login-required`   | The Registry did not accept the credentials.                                  |
+| `login-required`   | The Registry did not accept the credentials, or no CLI token is stored.       |
 | `refused`          | The Registry refused to sign; the message says why.                           |
 | `rate-limited`     | Over the per-user signing rate limit; `retryAfterMs` when the Registry said.  |
 | `unreachable`      | No usable answer from the Registry.                                           |
+| `login-failed`     | `login` was refused: the Registry answered with an OAuth error.               |
 
 ## Authentication
 
@@ -67,9 +68,72 @@ When no cookies can be produced, the call throws a `RegistryError` whose `code` 
 | `{ type: 'token', id, secret }` | scripts and services with a Registry auth entity      | Sends them as the Registry's bearer token, no cookies.   |
 | `{ type: 'bearer', token }`     | a caller that already holds the composed bearer token | Sends `Authorization: Bearer <token>` as is, no cookies. |
 | `{ type: 'session' }`           | code running in the browser, next to a Registry login | Sends the browser's cookies for the Registry, no token.  |
+| `{ type: 'cli' }`               | a developer's machine, after `ilc-registry login`     | Sends the token stored for `registryUrl`; Node only.     |
 
 The composed token is `base64(id):base64(secret)` of the auth entity, the form `type: 'token'` builds. Pass it with
 `type: 'bearer'` when the caller is given the token and never the entity.
+
+## CLI login
+
+A developer logs in to the Registry once from the terminal, in the browser, and scripts on that machine sign
+overrides with `auth: { type: 'cli' }` afterwards. The package installs the `ilc-registry` command:
+
+```sh
+ilc-registry login --registry https://ilc-registry.example.com
+ilc-registry login --registry https://ilc-registry.example.com --scope override:sign --scope registry:read
+ilc-registry status
+ilc-registry logout --registry https://ilc-registry.example.com
+```
+
+`login` runs the OAuth authorization code flow with PKCE: it opens the Registry's login page in the browser (and
+prints the URL, for when it cannot), takes the redirect on a loopback port, and exchanges the code for a token.
+Over SSH or in a container, where the browser cannot reach the loopback port, paste the redirect URL into the
+terminal when asked. The scope is `override:sign` unless `--scope` says otherwise. `--registry` can be left out
+when `ILC_REGISTRY_URL` is set.
+
+The token expires on its own after the lifetime the Registry gave it; `status` shows every Registry with its
+scopes, expiry and where the token is, never the token. `logout` revokes the token at the Registry and removes it.
+
+### Token storage
+
+- **macOS**: the token goes to the login Keychain through `/usr/bin/security`, service `ilc-registry`, one account
+  per Registry URL.
+- **Linux**: the token goes to `$XDG_CONFIG_HOME/ilc-registry/tokens.json`, or `~/.config/ilc-registry/tokens.json`,
+  with POSIX mode `0600` in a `0700` directory: other local user accounts cannot read it.
+- **Windows**: the token goes to the same file under `%USERPROFILE%\.config`. Node passes the mode bits but
+  Windows ignores them, so the file inherits the ACL of your profile directory, typically readable by your user,
+  SYSTEM and Administrators only.
+
+The file always holds what is not secret, the expiry and the scopes of each Registry, and where its token is. After
+a Keychain write the token is removed from the file, so there is never a second copy in a less protected place.
+
+The `cli` auth type takes the token from the macOS Keychain, read once per process, and otherwise from the token
+file. A token that reaches a process through its environment, on CI or where a proxy substitutes it, is passed with
+`auth: { type: 'bearer', token }` instead.
+
+```ts
+import { buildOverrideCookie } from 'ilc-registry-sdk';
+
+const result = await buildOverrideCookie(override, {
+    registryUrl: 'https://ilc-registry.example.com',
+    auth: { type: 'cli' },
+});
+```
+
+Without a token for that URL, or with an expired one, the call throws a `RegistryError` with code `login-required`
+whose message names the `ilc-registry login` command to run; nothing is asked interactively.
+
+The same flow is available to Node code from `ilc-registry-sdk/auth`:
+
+```ts
+import { login, logout, readStoredToken, tokenFilePath } from 'ilc-registry-sdk/auth';
+
+const { scopes, expiresAt } = await login({ registryUrl: 'https://ilc-registry.example.com' });
+```
+
+`ilc-registry-sdk/auth` is Node only: the token store uses `node:fs` and `node:child_process`, and the login
+starts a loopback HTTP server. The root entry point still bundles for browsers; there the `cli` auth type throws
+when selected.
 
 ## Signed overrides
 
