@@ -46,7 +46,7 @@ describe('MacosKeychainSource', () => {
         );
     });
 
-    it('reads the password without its trailing newline and asks the Keychain once per Registry', () => {
+    it('reads the password without its trailing newline and asks the Keychain every time', () => {
         const { execFileSync, source } = fakes('darwin', (args) =>
             args[0] === 'find-generic-password' ? 'opaque\n' : '',
         );
@@ -55,7 +55,8 @@ describe('MacosKeychainSource', () => {
         expect(source.read(registryUrl)).toBe('opaque');
         expect(source.read('https://other.test')).toBe('opaque');
 
-        expect(execFileSync).toHaveBeenCalledTimes(2);
+        // No cache: a token that another process stores is seen by the next read
+        expect(execFileSync).toHaveBeenCalledTimes(3);
         expect(execFileSync).toHaveBeenCalledWith(
             SECURITY_BINARY,
             ['find-generic-password', '-s', KEYCHAIN_SERVICE, '-a', registryUrl, '-w'],
@@ -63,12 +64,12 @@ describe('MacosKeychainSource', () => {
         );
     });
 
-    it('reads a missing item as absent, and caches that too', () => {
+    it('reads a missing item as absent, and asks again next time', () => {
         const { execFileSync, source } = fakes('darwin', notFound);
 
         expect(source.read(registryUrl)).toBeUndefined();
         expect(source.read(registryUrl)).toBeUndefined();
-        expect(execFileSync).toHaveBeenCalledTimes(1);
+        expect(execFileSync).toHaveBeenCalledTimes(2);
     });
 
     it('reads any other failure as absent', () => {
@@ -77,15 +78,6 @@ describe('MacosKeychainSource', () => {
         });
 
         expect(source.read(registryUrl)).toBeUndefined();
-    });
-
-    it('serves a written token from the cache', () => {
-        const { execFileSync, source } = fakes();
-
-        source.write(registryUrl, 'opaque');
-
-        expect(source.read(registryUrl)).toBe('opaque');
-        expect(execFileSync).toHaveBeenCalledTimes(1);
     });
 
     it('does nothing on another platform, and refuses to write there', () => {
@@ -97,7 +89,7 @@ describe('MacosKeychainSource', () => {
         expect(execFileSync).not.toHaveBeenCalled();
     });
 
-    it('clears the item and forgets the cached value; a missing item is not a failure', () => {
+    it('clears the item; a missing item is not a failure', () => {
         const { execFileSync, source } = fakes('darwin', (args) =>
             args[0] === 'delete-generic-password' ? notFound() : 'x',
         );
@@ -110,7 +102,6 @@ describe('MacosKeychainSource', () => {
             ['delete-generic-password', '-s', KEYCHAIN_SERVICE, '-a', registryUrl],
             expect.objectContaining({ timeout: 5000 }),
         );
-        expect(source.read(registryUrl)).toBeUndefined();
         expect(execFileSync).toHaveBeenCalledTimes(2);
     });
 });

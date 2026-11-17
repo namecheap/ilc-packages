@@ -107,9 +107,10 @@ scopes, expiry and where the token is, never the token. `logout` revokes the tok
 The file always holds what is not secret, the expiry and the scopes of each Registry, and where its token is. After
 a Keychain write the token is removed from the file, so there is never a second copy in a less protected place.
 
-The `cli` auth type takes the token from the macOS Keychain, read once per process, and otherwise from the token
-file. A token that reaches a process through its environment, on CI or where a proxy substitutes it, is passed with
-`auth: { type: 'bearer', token }` instead.
+The `cli` auth type takes the token from where the file entry says it is, the macOS Keychain or the file, and reads
+it on every call, so a login in another process is picked up at once by a process that is already running. A token
+that reaches a process through its environment, on CI or where a proxy substitutes it, is passed with
+`auth: { type: 'bearer', token }`.
 
 ```ts
 import { buildOverrideCookie } from 'ilc-registry-sdk';

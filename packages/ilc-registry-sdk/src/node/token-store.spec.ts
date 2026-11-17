@@ -128,34 +128,64 @@ describe('TokenStore', () => {
         });
     });
 
-    it('falls back to the file when the Keychain refuses the write', () => {
+    it('falls back to the file when the Keychain refuses the write, and an old item there never wins', () => {
+        // The Keychain still answers reads and deletes, but refuses to add or replace an item
+        const items = new Map([[registryUrl, 'stale']]);
         const keychain = new MacosKeychainSource({
             getPlatform: () => 'darwin',
             existsSync: () => true,
-            execFileSync: (() => {
-                throw new Error('User interaction is not allowed.');
+            execFileSync: ((_file: string, args: string[]) => {
+                if (args[0] === 'add-generic-password') {
+                    throw new Error('User interaction is not allowed.');
+                }
+                if (args[0] === 'delete-generic-password') {
+                    items.delete(registryUrl);
+                    return '';
+                }
+                return `${items.get(registryUrl) ?? ''}\n`;
             }) as unknown as typeof import('node:child_process').execFileSync,
         });
         const store = new TokenStore({ keychain, file });
 
         expect(store.write(registryUrl, { token: 'secret', expiresAt: inOneHour(), scopes: [] })).toBe('file');
+
         expect(file.read(registryUrl)).toBe('secret');
+        expect(items.has(registryUrl), 'the stale Keychain item is removed').toBe(false);
+        expect(store.read(registryUrl)).toMatchObject({ token: 'secret', source: 'file' });
     });
 
-    it('prefers the Keychain, then the file', () => {
-        const items = new Map<string, string>();
-        // Keychain reads are cached per instance, as per process in use, so each step gets a fresh one
-        const store = () => new TokenStore({ keychain: fakeKeychain('darwin', items).source, file });
+    it('reads the token from the source the file entry names, whatever the other source holds', () => {
+        const items = new Map([[registryUrl, 'from-keychain']]);
+        const store = new TokenStore({ keychain: fakeKeychain('darwin', items).source, file });
         file.writeEntry(registryUrl, {
             token: 'from-file',
             expiresAt: inOneHour().toISOString(),
             scopes: ['override:sign'],
             storedIn: 'file',
         });
-        expect(store().read(registryUrl)).toMatchObject({ token: 'from-file', source: 'file' });
+        expect(store.read(registryUrl)).toMatchObject({ token: 'from-file', source: 'file' });
 
-        items.set(registryUrl, 'from-keychain');
-        expect(store().read(registryUrl)).toMatchObject({ token: 'from-keychain', source: 'keychain' });
+        file.writeEntry(registryUrl, { expiresAt: inOneHour().toISOString(), scopes: [], storedIn: 'keychain' });
+        expect(store.read(registryUrl)).toMatchObject({ token: 'from-keychain', source: 'keychain' });
+
+        // The entry says Keychain but the item is gone: absent, not the file's leftover
+        items.delete(registryUrl);
+        expect(store.read(registryUrl)).toBeUndefined();
+    });
+
+    it('sees a token that another process stored, without any restart', () => {
+        const items = new Map<string, string>();
+        const store = new TokenStore({ keychain: fakeKeychain('darwin', items).source, file });
+        expect(store.read(registryUrl)).toBeUndefined();
+
+        // `ilc-registry login` in another process
+        new TokenStore({ keychain: fakeKeychain('darwin', items).source, file }).write(registryUrl, {
+            token: 'fresh',
+            expiresAt: inOneHour(),
+            scopes: ['override:sign'],
+        });
+
+        expect(store.read(registryUrl)).toMatchObject({ token: 'fresh', source: 'keychain' });
     });
 
     it('reads an expired token as absent wherever it is, while the listing still shows it', () => {

@@ -1,7 +1,8 @@
 /**
  * Where `ilc-registry login` keeps its tokens, and where `auth: { type: 'cli' }` reads them from. The token itself
- * comes from the first of these that has one: the macOS Keychain, then the token file. The file always holds the expiry and the scopes, and the token only where the Keychain is not
- * available, so there is never a second copy. Node only; a browser bundle gets `token-store.unsupported.ts`
+ * is in the macOS Keychain when it was available at login, in the token file otherwise. The file always holds the
+ * expiry, the scopes and where the token is, and that entry decides which source is read, so a stale Keychain item
+ * can never stand in for a newer token in the file. The token is in one place only. Node only; a browser bundle gets `token-store.unsupported.ts`
  * through the package's `#token-store` import instead.
  */
 import { HomeFileSource, tokenFilePath, type StoredIn } from './sources/home-file.js';
@@ -57,34 +58,32 @@ export function normalizeRegistryUrl(registryUrl: string): string {
 export class TokenStore {
     private readonly keychain: MacosKeychainSource;
     private readonly file: HomeFileSource;
-    /** Highest priority first */
-    private readonly sources: readonly TokenSource[];
 
     constructor(sources: Partial<TokenStoreSources> = {}) {
         this.keychain = sources.keychain ?? new MacosKeychainSource();
         this.file = sources.file ?? new HomeFileSource();
-        this.sources = [this.keychain, this.file];
     }
 
-    /** The token for the Registry from the first source that has one; an expired one reads as absent */
+    /**
+     * The token for the Registry, from the source its file entry names; absent without an entry, once expired, or
+     * when that source no longer has it. Nothing is cached, so a login in another process is seen at once.
+     */
     read(registryUrl: string): StoredToken | undefined {
         const key = normalizeRegistryUrl(registryUrl);
-        for (const source of this.sources) {
-            const token = source.read(key);
-            if (token === undefined) {
-                continue;
-            }
-            const entry = this.file.readEntry(key);
-            if (entry === undefined) {
-                return undefined;
-            }
-            const expiresAt = new Date(entry.expiresAt);
-            if (expiresAt.getTime() <= Date.now()) {
-                return undefined;
-            }
-            return { token, expiresAt, scopes: entry.scopes, source: source.id };
+        const entry = this.file.readEntry(key);
+        if (entry === undefined) {
+            return undefined;
         }
-        return undefined;
+        const expiresAt = new Date(entry.expiresAt);
+        if (expiresAt.getTime() <= Date.now()) {
+            return undefined;
+        }
+        const source: TokenSource = entry.storedIn === 'keychain' ? this.keychain : this.file;
+        const token = source.read(key);
+        if (token === undefined) {
+            return undefined;
+        }
+        return { token, expiresAt, scopes: entry.scopes, source: source.id };
     }
 
     /** Every Registry the file knows, expired ones included, with where its token is */
@@ -110,7 +109,10 @@ export class TokenStore {
                 this.file.writeEntry(key, { ...metadata, storedIn: 'keychain' });
                 return 'keychain';
             } catch {
-                // A Keychain that refuses, locked for example: the file takes the token, as on other platforms
+                // A Keychain that refuses, locked for example: the file takes the token, as on other platforms. An
+                // older item is removed when the Keychain allows it, and the entry's `storedIn` keeps it out of reads
+                // either way.
+                this.keychain.clear(key);
             }
         }
         this.file.writeEntry(key, { ...metadata, token: stored.token, storedIn: 'file' });

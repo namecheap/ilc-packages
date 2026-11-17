@@ -1,6 +1,7 @@
 /**
  * The macOS login Keychain through `/usr/bin/security`: service `ilc-registry`, one account per Registry URL.
- * Available on darwin when the binary exists. Reads are cached: one `security` call per Registry and process.
+ * Available on darwin when the binary exists. Every read asks the Keychain, so a token that another process stored,
+ * `ilc-registry login` for example, is seen at once by a process that is already running.
  *
  * Accepted trade-off: the token goes to `add-generic-password` as `-w <value>`, since the command has no mode that
  * reads the password from stdin, so it is visible in argv to processes of the same user for the time of the call.
@@ -33,8 +34,6 @@ export class MacosKeychainSource implements TokenSource {
     readonly id = 'keychain';
 
     private readonly deps: KeychainDeps;
-    /** The last read per Registry URL; a key is present once the Keychain was asked */
-    private readonly cache = new Map<string, string | undefined>();
 
     constructor(deps: Partial<KeychainDeps> = {}) {
         this.deps = { ...DEFAULT_DEPS, ...deps };
@@ -48,12 +47,7 @@ export class MacosKeychainSource implements TokenSource {
         if (!this.isAvailable()) {
             return undefined;
         }
-        if (this.cache.has(registryUrl)) {
-            return this.cache.get(registryUrl);
-        }
-        const value = this.find(registryUrl);
-        this.cache.set(registryUrl, value);
-        return value;
+        return this.find(registryUrl);
     }
 
     /** Adds or replaces the item; throws when the Keychain is not available or refuses */
@@ -62,7 +56,6 @@ export class MacosKeychainSource implements TokenSource {
             throw new Error('The macOS Keychain is not available on this platform');
         }
         this.security(['add-generic-password', '-U', '-s', KEYCHAIN_SERVICE, '-a', registryUrl, '-w', token]);
-        this.cache.set(registryUrl, token);
     }
 
     /** Removes the item; an absent item or an unavailable Keychain is not a failure */
@@ -75,7 +68,6 @@ export class MacosKeychainSource implements TokenSource {
         } catch {
             // Absent, or already cleared
         }
-        this.cache.set(registryUrl, undefined);
     }
 
     private find(registryUrl: string): string | undefined {
