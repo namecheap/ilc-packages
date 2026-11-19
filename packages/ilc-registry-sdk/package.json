@@ -19,7 +19,20 @@
         ".": {
             "types": "./dist/index.d.ts",
             "default": "./dist/index.js"
+        },
+        "./auth": {
+            "types": "./dist/auth/index.d.ts",
+            "default": "./dist/auth/index.js"
         }
+    },
+    "imports": {
+        "#token-store": {
+            "node": "./dist/node/token-store.js",
+            "default": "./dist/node/token-store.unsupported.js"
+        }
+    },
+    "bin": {
+        "ilc-registry": "./dist/bin/ilc-registry.js"
     },
     "files": [
         "dist"
