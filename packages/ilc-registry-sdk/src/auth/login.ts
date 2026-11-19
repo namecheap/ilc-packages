@@ -8,7 +8,8 @@ import { createInterface } from 'node:readline';
 
 import { CLI_CLIENT_ID, DEFAULT_CLI_SCOPE } from '../constants.js';
 import { RegistryError } from '../errors.js';
-import { normalizeRegistryUrl, saveStoredToken, type StoredIn } from '#token-store';
+import { normalizeRegistryUrl, saveStoredToken } from '#token-store';
+import type { StoredIn } from '../node/token-store.js';
 import { describeError, discoverEndpoints, type OAuthEndpoints } from './endpoints.js';
 import { openBrowser as defaultOpenBrowser } from './open-browser.js';
 import { codeChallenge, codeVerifier, randomState } from './pkce.js';

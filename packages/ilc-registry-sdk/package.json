@@ -15,6 +15,11 @@
         "directory": "packages/ilc-registry-sdk"
     },
     "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "bin": {
+        "ilc-registry": "./dist/bin/ilc-registry.js"
+    },
     "exports": {
         ".": {
             "types": "./dist/index.d.ts",
@@ -31,8 +36,12 @@
             "default": "./dist/node/token-store.unsupported.js"
         }
     },
-    "bin": {
-        "ilc-registry": "./dist/bin/ilc-registry.js"
+    "typesVersions": {
+        "*": {
+            "auth": [
+                "./dist/auth/index.d.ts"
+            ]
+        }
     },
     "files": [
         "dist"
