@@ -2,10 +2,11 @@
 
 Libraries, SDKs and helpers for [ILC](https://github.com/namecheap/ilc). Each package is versioned and published to npm on its own.
 
-| Package                                         | Description                       | npm                                                                                                     |
-| ----------------------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| [`ilc-registry-sdk`](packages/ilc-registry-sdk) | Client for the ILC registry API.  | [![npm](https://img.shields.io/npm/v/ilc-registry-sdk)](https://www.npmjs.com/package/ilc-registry-sdk) |
-| [`ilc-sdk`](packages/ilc-sdk)                   | SDK for app development with ILC. | [![npm](https://img.shields.io/npm/v/ilc-sdk)](https://www.npmjs.com/package/ilc-sdk)                   |
+| Package                                           | Description                                | npm                                                                                                       |
+| ------------------------------------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| [`ilc-registry-sdk`](packages/ilc-registry-sdk)   | Client for the ILC registry API.           | [![npm](https://img.shields.io/npm/v/ilc-registry-sdk)](https://www.npmjs.com/package/ilc-registry-sdk)   |
+| [`ilc-sdk`](packages/ilc-sdk)                     | SDK for app development with ILC.          | [![npm](https://img.shields.io/npm/v/ilc-sdk)](https://www.npmjs.com/package/ilc-sdk)                     |
+| [`ilc-adapter-react`](packages/ilc-adapter-react) | Adapter for React apps and parcels in ILC. | [![npm](https://img.shields.io/npm/v/ilc-adapter-react)](https://www.npmjs.com/package/ilc-adapter-react) |
 
 ## Quick start
 
