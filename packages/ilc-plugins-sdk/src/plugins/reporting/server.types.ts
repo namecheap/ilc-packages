@@ -1,20 +1,10 @@
-import {
-    Logger,
-} from '../common/server.types';
+import { Logger } from '../common/server.types';
 
-import {
-    Plugin,
-} from '../../pluginManager/server.types';
+import { Plugin } from '../../pluginManager/server.types';
 
-export declare class IlcError implements Error {
-    public name: string;
-    public message: string;
-    public stack?: string;
-
-    public cause?: IlcError;
-    public data?: any;
-
-    constructor(message?: string);
+export interface IlcError extends Error {
+    cause?: IlcError;
+    data?: any;
 }
 
 export declare interface IlcReportingPlugin extends Plugin {

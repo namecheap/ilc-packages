@@ -22,6 +22,20 @@
     "type": "commonjs",
     "main": "dist/server.js",
     "types": "dist/server.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/server.d.ts",
+            "default": "./dist/server.js"
+        },
+        "./browser": {
+            "types": "./dist/browser.d.ts",
+            "default": "./dist/browser.js"
+        },
+        "./webpack": {
+            "types": "./dist/webpack.d.ts",
+            "default": "./dist/webpack.js"
+        }
+    },
     "files": [
         "dist",
         "!dist/*.tsbuildinfo",
@@ -46,6 +60,14 @@
         "http-headers": "^3.0.2",
         "hyperid": "^3.3.0",
         "pino": "^10.1.0"
+    },
+    "peerDependencies": {
+        "webpack": "^5.0.0"
+    },
+    "peerDependenciesMeta": {
+        "webpack": {
+            "optional": true
+        }
     },
     "devDependencies": {
         "@types/http-headers": "^3.0.4",
