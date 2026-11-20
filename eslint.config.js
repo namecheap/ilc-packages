@@ -8,7 +8,7 @@ const TEST_FILES = ['**/*.{spec,test}.?(m|c)ts?(x)', '**/test/**/*.?(m|c)ts?(x)'
 
 export default tseslint.config(
     {
-        // The two ilc-sdk shims are CommonJS by design, for tools that ignore the exports map
+        // The ilc-sdk and ilc-plugins-sdk shims are CommonJS by design, for tools that ignore the exports map
         ignores: [
             '**/dist/**',
             '**/coverage/**',
@@ -17,6 +17,10 @@ export default tseslint.config(
             '.changeset/**',
             'packages/ilc-sdk/app.js',
             'packages/ilc-sdk/app.d.ts',
+            'packages/ilc-plugins-sdk/browser.js',
+            'packages/ilc-plugins-sdk/browser.d.ts',
+            'packages/ilc-plugins-sdk/webpack.js',
+            'packages/ilc-plugins-sdk/webpack.d.ts',
         ],
     },
 
@@ -94,6 +98,15 @@ export default tseslint.config(
             '@typescript-eslint/no-wrapper-object-types': 'off',
             'no-empty': 'off',
             'no-prototype-builtins': 'off',
+        },
+    },
+    // ilc-plugins-sdk: its public types use `any` and `{}` on purpose, as plugin authors rely on them
+    {
+        files: ['packages/ilc-plugins-sdk/**/*.ts'],
+        rules: {
+            '@typescript-eslint/no-explicit-any': 'off',
+            '@typescript-eslint/no-empty-object-type': ['error', { allowObjectTypes: 'always' }],
+            '@typescript-eslint/no-unsafe-function-type': 'off',
         },
     },
     {
