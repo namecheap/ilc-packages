@@ -83,7 +83,7 @@ export async function buildOverrideCookie(
                 size,
             };
         case 'unauthorized':
-            throw new RegistryError('login-required', 'The Registry did not accept the credentials');
+            throw new RegistryError('login-required', outcome.message ?? 'The Registry did not accept the credentials');
         case 'refused':
             throw new RegistryError('refused', `The Registry refused to sign the override: ${outcome.message}`);
         case 'rate-limited':

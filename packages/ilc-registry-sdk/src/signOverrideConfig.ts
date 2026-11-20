@@ -20,8 +20,8 @@ export type SignOutcome =
     | { kind: 'signed'; signature: string; expiresAt: Date; untrustedLinks: string[] }
     /** The Registry has no signing key: the override cookie is written alone, as before signing existed */
     | { kind: 'not-configured' }
-    /** The Registry did not accept the credentials */
-    | { kind: 'unauthorized' }
+    /** The Registry did not accept the credentials, or the auth had none to send; `message` says what to do when known */
+    | { kind: 'unauthorized'; message?: string }
     /** The Registry refused the value: too large, not an object, or with keys it does not sign */
     | { kind: 'refused'; message: string }
     /** Over the per-user rate limit; `retryAfterMs` when the Registry said how long to wait */
@@ -31,7 +31,7 @@ export type SignOutcome =
 
 /** Asks the Registry to sign the override cookie value */
 export async function signOverrideConfig(value: string, options: SignOptions): Promise<SignOutcome> {
-    const auth = resolveAuth(options.auth);
+    const auth = resolveAuth(options.auth, options.registryUrl);
     const outcome = await request(value, auth, options);
     if (outcome.kind === 'unauthorized' && auth.recover && (await auth.recover())) {
         return request(value, auth, options);
@@ -40,6 +40,9 @@ export async function signOverrideConfig(value: string, options: SignOptions): P
 }
 
 async function request(value: string, auth: AuthStrategy, options: SignOptions): Promise<SignOutcome> {
+    if (auth.missing !== undefined) {
+        return { kind: 'unauthorized', message: auth.missing };
+    }
     const { registryUrl, timeoutMs = DEFAULT_TIMEOUT_MS } = options;
     const url = `${registryUrl.replace(/\/+$/, '')}${SIGN_PATH}`;
 
@@ -63,7 +66,9 @@ async function request(value: string, auth: AuthStrategy, options: SignOptions):
             return { kind: 'not-configured' };
         case 401:
         case 403:
-            return { kind: 'unauthorized' };
+            return auth.rejected === undefined
+                ? { kind: 'unauthorized' }
+                : { kind: 'unauthorized', message: auth.rejected };
         case 422:
             return { kind: 'refused', message: await response.text() };
         case 429: {

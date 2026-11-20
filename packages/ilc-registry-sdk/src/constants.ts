@@ -15,3 +15,15 @@ export const COMPRESSED_PREFIX = 'LZUTF8:';
 
 /** The only top-level keys the Registry signs */
 export const OVERRIDE_TOP_LEVEL_KEYS = ['apps', 'routes', 'sharedLibs'] as const;
+
+/** Path of the OAuth authorization server metadata document (RFC 8414), relative to the Registry URL */
+export const OAUTH_METADATA_PATH = '/.well-known/oauth-authorization-server';
+
+/** OAuth endpoints used when the Registry serves no metadata document, relative to the Registry URL */
+export const OAUTH_FALLBACK_PATHS = { authorize: '/oauth/authorize', token: '/oauth/token', revoke: '/oauth/revoke' };
+
+/** The OAuth client the CLI login identifies as */
+export const CLI_CLIENT_ID = 'ilc-registry-cli';
+
+/** The scope `ilc-registry login` asks for when none is given: enough to sign override cookies */
+export const DEFAULT_CLI_SCOPE = 'override:sign';

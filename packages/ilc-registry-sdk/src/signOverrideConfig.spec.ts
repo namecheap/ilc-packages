@@ -148,7 +148,7 @@ describe('signOverrideConfig', () => {
             .mockResolvedValueOnce(new Response(JSON.stringify(signed), { status: 200 }));
         vi.stubGlobal('fetch', fetch);
         vi.spyOn(authModule, 'resolveAuth').mockReturnValue({
-            ...authModule.resolveAuth(options.auth),
+            ...authModule.resolveAuth(options.auth, options.registryUrl),
             recover: vi.fn().mockResolvedValue(true),
         });
 
@@ -161,7 +161,7 @@ describe('signOverrideConfig', () => {
     it('gives up when the auth cannot recover', async () => {
         const fetch = answering(401);
         vi.spyOn(authModule, 'resolveAuth').mockReturnValue({
-            ...authModule.resolveAuth(options.auth),
+            ...authModule.resolveAuth(options.auth, options.registryUrl),
             recover: vi.fn().mockResolvedValue(false),
         });
 
