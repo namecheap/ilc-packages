@@ -1,0 +1,30 @@
+{
+    "include": ["src/**/*.js", "src/**/*.jsx", "src/**/*.ts", "src/**/*.tsx"],
+    "exclude": [
+        "src/**/*.spec.ts",
+        "src/**/*.test.ts",
+        "src/**/*.spec.tsx",
+        "src/**/*.test.tsx",
+        "src/**/*.spec.js",
+        "src/**/*.test.js",
+        "src/**/*.spec.jsx",
+        "src/**/*.test.jsx"
+    ],
+    "compilerOptions": {
+        "outDir": "dist",
+        "strict": true,
+        "target": "es6",
+        "module": "CommonJS",
+        "moduleResolution": "node",
+        "resolveJsonModule": true,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "declaration": true,
+        "noImplicitAny": true,
+        "sourceMap": false,
+        "jsx": "react",
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
+        "lib": ["es2016", "dom"]
+    }
+}
