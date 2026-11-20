@@ -1,5 +1,14 @@
 # ilc-registry-sdk
 
+## 0.3.1
+
+### Patch Changes
+
+- [#11](https://github.com/namecheap/ilc-packages/pull/11) [`1a56c62`](https://github.com/namecheap/ilc-packages/commit/1a56c62d34397dd18977c03327e8856d13e7b01f) Thanks [@stas-nc](https://github.com/stas-nc)! - Fixes the package for projects compiled with `module: commonjs` and the older module resolution: `main`, `types` and
+  `typesVersions` now point at the entry points and their declarations, and the published declarations no longer
+  reference the package's internal `#token-store` import. The package stays an ES module; `require()` of it needs
+  Node 20.19 or 22.12 and later.
+
 ## 0.3.0
 
 ### Minor Changes
