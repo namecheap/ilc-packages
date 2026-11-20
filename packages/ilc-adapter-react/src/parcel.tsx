@@ -30,7 +30,7 @@ interface State {
 export default class Parcel extends React.Component<ParcelProps, State> {
     private el?: HTMLElement;
     private createdDomElement?: HTMLElement;
-    private mountParcel?: MountParcel;
+    private mountParcel?: MountParcel | undefined;
     private parcel?: ParcelObject;
     private unmounted = false;
     private activePromiseChain?: Promise<unknown>;
@@ -44,12 +44,12 @@ export default class Parcel extends React.Component<ParcelProps, State> {
 
         if (!props.loadingConfig && !props.loadingFn) {
             throw new Error(
-                `ilc-adapter-react: Parcel component requires the 'loadingConfig' or 'loadingFn' prop to either be passed.`
+                `ilc-adapter-react: Parcel component requires the 'loadingConfig' or 'loadingFn' prop to either be passed.`,
             );
         }
     }
 
-    componentDidMount() {
+    override componentDidMount() {
         this.schedulePromise('mount', () => {
             const mountParcel = this.props.mountParcel || this.mountParcel;
             if (!mountParcel) {
@@ -81,7 +81,7 @@ export default class Parcel extends React.Component<ParcelProps, State> {
                 : () =>
                       GlobalBrowserApi.importParcelFromApp(
                           this.props.loadingConfig!.appName,
-                          this.props.loadingConfig!.parcelName
+                          this.props.loadingConfig!.parcelName,
                       );
 
             this.parcel = mountParcel(loadingFn, {
@@ -91,26 +91,30 @@ export default class Parcel extends React.Component<ParcelProps, State> {
             });
 
             if (this.props.parcelDidMount) {
-                this.parcel.mountPromise.then(this.props.parcelDidMount);
+                void this.parcel.mountPromise.then(this.props.parcelDidMount);
             }
 
             return this.parcel.mountPromise;
         });
     }
 
-    componentDidUpdate() {
+    override componentDidUpdate() {
         this.schedulePromise('update', () => {
             if (this.parcel && this.parcel.update) {
                 return this.parcel.update(this.getParcelProps());
             }
+
+            return undefined;
         });
     }
 
-    componentWillUnmount() {
+    override componentWillUnmount() {
         this.schedulePromise('unmount', () => {
             if (this.parcel && this.parcel.getStatus() === 'MOUNTED') {
                 return this.parcel.unmount();
             }
+
+            return undefined;
         });
 
         if (this.createdDomElement && this.createdDomElement.parentNode) {
@@ -120,7 +124,7 @@ export default class Parcel extends React.Component<ParcelProps, State> {
         this.unmounted = true;
     }
 
-    render() {
+    override render() {
         // In case when "appendTo" prop passed - we render nothing within app DOM tree
         // We only fetch necessary info from context
         if (this.props.appendTo) {
@@ -156,7 +160,7 @@ export default class Parcel extends React.Component<ParcelProps, State> {
                     style: this.props.wrapStyle,
                     className: this.props.wrapClassName,
                 },
-                children
+                children,
             );
         }
     }
@@ -229,7 +233,7 @@ export default class Parcel extends React.Component<ParcelProps, State> {
         const parcelProps = { ...this.props };
 
         delete parcelProps.mountParcel;
-        delete parcelProps.config;
+        delete parcelProps['config'];
         delete parcelProps.wrapWith;
         delete parcelProps.wrapStyle;
         delete parcelProps.appendTo;

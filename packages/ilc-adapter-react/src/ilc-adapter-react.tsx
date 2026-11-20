@@ -26,10 +26,6 @@ export class IlcAdapterReact<LifecycleFnProps extends IlcLifecycleFnProps> imple
             ...userOpts,
             parcelCanUpdate: true, // by default, allow parcels created with single-spa-react to be updated
         };
-
-        if (this.userOpts.parcelCanUpdate === false) {
-            this.update = undefined;
-        }
     }
 
     bootstrap = async (props: LifecycleFnProps) => {
@@ -47,14 +43,14 @@ export class IlcAdapterReact<LifecycleFnProps extends IlcLifecycleFnProps> imple
     mount = async (props: LifecycleFnProps): Promise<Root> => {
         if (!this.rootComponent) {
             throw new IlcAdapterError(
-                `ilc-adapter-react: Looks like "mount" was called before completion of the "bootstrap"`
+                `ilc-adapter-react: Looks like "mount" was called before completion of the "bootstrap"`,
             );
         }
 
         const domElement = this.chooseDomElementGetter(props)();
         if (!domElement) {
             throw new IlcAdapterError(
-                `ilc-adapter-react: domElementGetter function for application '${props.name}' did not return a valid dom element. Please pass a valid domElement or domElementGetter via opts or props`
+                `ilc-adapter-react: domElementGetter function for application '${props.name}' did not return a valid dom element. Please pass a valid domElement or domElementGetter via opts or props`,
             );
         }
 
@@ -80,17 +76,17 @@ export class IlcAdapterReact<LifecycleFnProps extends IlcLifecycleFnProps> imple
         }
     };
 
-    update? = async (props: LifecycleFnProps): Promise<Root> => {
+    update = async (props: LifecycleFnProps): Promise<Root> => {
         if (!this.rootComponent) {
             throw new IlcAdapterError(
-                `ilc-adapter-react: Looks like "update" was called before completion of the "bootstrap"`
+                `ilc-adapter-react: Looks like "update" was called before completion of the "bootstrap"`,
             );
         }
 
         const domElement = this.domElements[props.name];
         if (domElement === undefined) {
             throw new IlcAdapterError(
-                `ilc-adapter-react: Looks like "update" was called before "mount" or after "unmount"`
+                `ilc-adapter-react: Looks like "update" was called before "mount" or after "unmount"`,
             );
         }
 
@@ -100,7 +96,7 @@ export class IlcAdapterReact<LifecycleFnProps extends IlcLifecycleFnProps> imple
 
         if (reactRoot === undefined) {
             throw new IlcAdapterError(
-                `ilc-adapter-react: Looks like "update" was called before "mount" or after "unmount". Root node is not defined`
+                `ilc-adapter-react: Looks like "update" was called before "mount" or after "unmount". Root node is not defined`,
             );
         }
 
@@ -113,7 +109,7 @@ export class IlcAdapterReact<LifecycleFnProps extends IlcLifecycleFnProps> imple
         } else if (props.domElementGetter) {
             if (typeof props.domElementGetter !== 'function') {
                 throw new Error(
-                    `ilc-adapter-react: the domElementGetter for react application '${props.name}' is not a function`
+                    `ilc-adapter-react: the domElementGetter for react application '${props.name}' is not a function`,
                 );
             }
 
@@ -136,7 +132,7 @@ export class IlcAdapterReact<LifecycleFnProps extends IlcLifecycleFnProps> imple
             : (error) => {
                   console.error(
                       `ilc-adapter-react: app or parcel "${props.name}" have thrown an uncaught error:`,
-                      error
+                      error,
                   );
               };
 
@@ -154,15 +150,18 @@ export class IlcAdapterReact<LifecycleFnProps extends IlcLifecycleFnProps> imple
         domElement: Element,
         forceRender = false,
         reactRoot: Root | undefined,
-        props: IlcLifecycleFnProps
+        props: IlcLifecycleFnProps,
     ): Root {
         if (!forceRender && domElement.childElementCount > 0) {
             //We're likely rendering app after SSR
             const { onRecoverableError } = this.userOpts;
-            const onRecoverableErrorWrapped = onRecoverableError
-                ? (error: unknown, errorInfo: ErrorInfo) => onRecoverableError(error, errorInfo, props)
+            const options = onRecoverableError
+                ? {
+                      onRecoverableError: (error: unknown, errorInfo: ErrorInfo) =>
+                          onRecoverableError(error, errorInfo, props),
+                  }
                 : undefined;
-            return hydrateRoot(domElement, elementToRender, { onRecoverableError: onRecoverableErrorWrapped });
+            return hydrateRoot(domElement, elementToRender, options);
         }
 
         // default to this if 'renderType' is null or doesn't match the other options

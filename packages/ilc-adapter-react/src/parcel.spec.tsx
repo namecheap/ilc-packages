@@ -1,33 +1,30 @@
-import '@testing-library/jest-dom';
-
-import * as React from 'react';
-
 import { render, waitFor } from '@testing-library/react';
 
 import ilcAdapterReact, { SingleSpaContext } from './ilc-adapter-react';
 import Parcel, { type ParcelProps } from './parcel';
 
 import type { LifeCycles, ParcelLifecycleFnProps, ParcelObject } from 'ilc-sdk/app';
+
 describe(`<Parcel />`, () => {
     let config: LifeCycles<ParcelLifecycleFnProps>, parcel: ParcelObject, props: ParcelProps;
-    const mountParcel = jest.fn();
+    const mountParcel = vi.fn();
 
     beforeEach(() => {
         config = {
-            bootstrap: jest.fn(),
-            mount: jest.fn(),
-            unmount: jest.fn(),
+            bootstrap: vi.fn(async () => null),
+            mount: vi.fn(async () => null),
+            unmount: vi.fn(async () => null),
         };
 
         parcel = {
-            mount: jest.fn(),
+            mount: vi.fn(),
             loadPromise: Promise.resolve(null),
             bootstrapPromise: Promise.resolve(null),
             mountPromise: Promise.resolve(null),
             unmountPromise: Promise.resolve(null),
-            getStatus: jest.fn(),
-            unmount: jest.fn(),
-            update: jest.fn(),
+            getStatus: vi.fn(),
+            unmount: vi.fn(),
+            update: vi.fn(),
         };
 
         mountParcel.mockReset();
@@ -65,7 +62,7 @@ describe(`<Parcel />`, () => {
     });
 
     it(`calls parcelDidMount prop when the parcel finishes mounting`, async () => {
-        const parcelDidMount = jest.fn();
+        const parcelDidMount = vi.fn();
         render(<Parcel {...props} parcelDidMount={parcelDidMount} />);
 
         expect(parcelDidMount).not.toHaveBeenCalled();
@@ -73,57 +70,59 @@ describe(`<Parcel />`, () => {
         await waitFor(() => expect(parcelDidMount).toHaveBeenCalled());
     });
 
-    // eslint-disable-next-line jest/no-done-callback
-    it(`doesn't update the parcel a second or third time until previous parcel updates complete`, (done) => {
+    it(`doesn't update the parcel a second or third time until previous parcel updates complete`, async () => {
         const wrapper = render(<Parcel {...props} />);
 
         let numParcelUpdateCalls = 0;
         let firstParcelUpdateFinished = false;
         let secondParcelUpdateFinished = false;
 
-        (parcel.update as jest.Mock).mockImplementation(() => {
-            switch (++numParcelUpdateCalls) {
-                case 1:
-                    return firstParcelUpdate();
-                case 2:
-                    return secondParcelUpdate();
-                case 3:
-                    return thirdParcelUpdate();
-                default:
-                    done.fail('Parcel update should only be called thrice');
-                    break;
+        const thirdUpdateDone = new Promise<void>((resolve, reject) => {
+            vi.mocked(parcel.update!).mockImplementation(() => {
+                switch (++numParcelUpdateCalls) {
+                    case 1:
+                        return firstParcelUpdate();
+                    case 2:
+                        return secondParcelUpdate();
+                    case 3:
+                        return thirdParcelUpdate();
+                    default:
+                        reject(new Error('Parcel update should only be called thrice'));
+                        return Promise.resolve(null);
+                }
+            });
+
+            function firstParcelUpdate() {
+                return new Promise<null>((resolveUpdate) => {
+                    /* Don't resolve this promise for a while to make sure that the second update
+                     * Doesn't start until the first finishes
+                     */
+                    setTimeout(() => {
+                        firstParcelUpdateFinished = true;
+                        resolveUpdate(null);
+                    }, 100);
+                });
+            }
+
+            function secondParcelUpdate() {
+                return new Promise<null>((resolveUpdate) => {
+                    setTimeout(() => {
+                        expect(firstParcelUpdateFinished).toBe(true);
+                        secondParcelUpdateFinished = true;
+                        resolveUpdate(null);
+                    }, 100);
+                });
+            }
+
+            function thirdParcelUpdate() {
+                return Promise.resolve().then(() => {
+                    expect(firstParcelUpdateFinished).toBe(true);
+                    expect(secondParcelUpdateFinished).toBe(true);
+                    resolve();
+                    return null;
+                });
             }
         });
-
-        function firstParcelUpdate() {
-            return new Promise<void>((resolve) => {
-                /* Don't resolve this promise for a while to make sure that the second update
-                 * Doesn't start until the first finishes
-                 */
-                setTimeout(() => {
-                    firstParcelUpdateFinished = true;
-                    resolve();
-                }, 100);
-            });
-        }
-
-        function secondParcelUpdate() {
-            return new Promise<void>((resolve) => {
-                setTimeout(() => {
-                    expect(firstParcelUpdateFinished).toBe(true);
-                    secondParcelUpdateFinished = true;
-                    resolve();
-                }, 100);
-            });
-        }
-
-        function thirdParcelUpdate() {
-            return Promise.resolve().then(() => {
-                expect(firstParcelUpdateFinished).toBe(true);
-                expect(secondParcelUpdateFinished).toBe(true);
-                done();
-            });
-        }
 
         function triggerComponentDidUpdate() {
             wrapper.rerender(<Parcel {...props} />);
@@ -137,13 +136,15 @@ describe(`<Parcel />`, () => {
 
         // but thrice!
         triggerComponentDidUpdate();
+
+        await thirdUpdateDone;
     });
 
     it(`calls mountParcel with all the React props`, async () => {
         render(<Parcel {...props} />);
         // We need to wait for a microtask to finish before the Parcel component will have called mountParcel
         await waitFor(() => expect(mountParcel).toHaveBeenCalled());
-        const parcelProps = mountParcel.mock.calls[0][1];
+        const parcelProps = mountParcel.mock.calls[0]![1];
         expect(parcelProps.domElement).toBeInstanceOf(HTMLDivElement);
     });
 
@@ -158,7 +159,7 @@ describe(`<Parcel />`, () => {
         render(
             <SingleSpaContext.Provider value={{ mountParcel }}>
                 <Parcel loadingFn={() => Promise.resolve(config)} />
-            </SingleSpaContext.Provider>
+            </SingleSpaContext.Provider>,
         );
 
         await waitFor(() => expect(mountParcel).toHaveBeenCalled());

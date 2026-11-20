@@ -1,8 +1,0 @@
-/.idea
-node_modules/
-.DS_Store
-lib/
-yarn-error.log
-coverage
-parcel/
-/dist

@@ -8,7 +8,7 @@ const TEST_FILES = ['**/*.{spec,test}.?(m|c)ts?(x)', '**/test/**/*.?(m|c)ts?(x)'
 
 export default tseslint.config(
     {
-        // The two ilc-sdk shims are CommonJS by design, for tools that ignore the exports map
+        // The ilc-sdk and ilc-adapter-react shims are CommonJS by design, for tools that ignore the exports map
         ignores: [
             '**/dist/**',
             '**/coverage/**',
@@ -17,6 +17,10 @@ export default tseslint.config(
             '.changeset/**',
             'packages/ilc-sdk/app.js',
             'packages/ilc-sdk/app.d.ts',
+            'packages/ilc-adapter-react/parcel.js',
+            'packages/ilc-adapter-react/parcel.d.ts',
+            'packages/ilc-adapter-react/server.js',
+            'packages/ilc-adapter-react/server.d.ts',
         ],
     },
 

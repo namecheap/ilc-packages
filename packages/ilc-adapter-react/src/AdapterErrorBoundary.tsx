@@ -9,7 +9,7 @@ interface ErrorState {
 
 interface Props {
     onError: ErrorHandler;
-    errorBoundary?: (error: Error, errorInfo?: ErrorInfo) => ReactNode;
+    errorBoundary?: ((error: Error, errorInfo?: ErrorInfo) => ReactNode) | undefined;
     children?: React.ReactNode;
 }
 
@@ -28,7 +28,7 @@ export default class AdapterErrorBoundary extends React.Component<Props, ErrorSt
         };
     }
 
-    componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
         this.setState({
             caughtError: error,
             caughtErrorInfo: errorInfo,
@@ -39,7 +39,7 @@ export default class AdapterErrorBoundary extends React.Component<Props, ErrorSt
         });
     }
 
-    render() {
+    override render() {
         if (this.state.caughtError) {
             if (this.props.errorBoundary) {
                 return this.props.errorBoundary(this.state.caughtError, this.state.caughtErrorInfo);

@@ -1,7 +1,5 @@
-import * as React from 'react';
 import ilcAdapterReact from './ilc-adapter-react';
-import '@testing-library/jest-dom';
-import {
+import type {
     AppLifecycleFnProps,
     AppWrapperLifecycleFnProps,
     IlcIntl,
@@ -10,12 +8,11 @@ import {
     ParcelSdk,
 } from 'ilc-sdk/app';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function hasType<T>(v: T) {}
+function hasType<T>(_value: T) {}
 
 describe('ilc-adapter-react', () => {
     let root: HTMLElement;
-    const ilcErrHandler = jest.fn();
+    const ilcErrHandler = vi.fn();
     const appProps: AppLifecycleFnProps = Object.freeze({
         name: 'TEST_APP',
         appId: 'TEST_APP',
@@ -35,7 +32,7 @@ describe('ilc-adapter-react', () => {
     const getParcelProps = function <T = unknown>(
         parcelId = 'TEST_PARCEL',
         domElement = root,
-        registryProps?: T
+        registryProps?: T,
     ): ParcelLifecycleFnProps<unknown, T> {
         return {
             parcelSdk: {
@@ -62,7 +59,7 @@ describe('ilc-adapter-react', () => {
         document.body.removeChild(root);
     });
 
-    // eslint-disable-next-line jest/expect-expect
+    // eslint-disable-next-line vitest/expect-expect -- the checks are the types of the callbacks, done by tsc
     it('has correct constructor typings', () => {
         ilcAdapterReact<AppLifecycleFnProps>({
             rootComponent: (props) => {
@@ -112,8 +109,6 @@ describe('ilc-adapter-react', () => {
 
         await pause();
 
-        console.log(root.innerHTML);
-
         expect(root.childElementCount).toEqual(0);
     });
 
@@ -139,7 +134,7 @@ describe('ilc-adapter-react', () => {
     });
 
     it('onRecoverableError hander works', async () => {
-        const onRecoverableError = jest.fn();
+        const onRecoverableError = vi.fn();
         const lifecycles = ilcAdapterReact({
             rootComponent: () => <h3>Hello world!</h3>,
             onRecoverableError,
@@ -157,7 +152,7 @@ describe('ilc-adapter-react', () => {
         expect(onRecoverableError).toHaveBeenCalledWith(
             new Error('Text content does not match server-rendered HTML.'),
             { componentStack: expect.stringMatching(/h3/m), digest: null },
-            appProps
+            appProps,
         );
 
         await lifecycles.unmount(appProps);
@@ -259,6 +254,15 @@ describe('ilc-adapter-react', () => {
     });
 
     describe('error boundaries', () => {
+        beforeEach(() => {
+            // React reports every error caught by a boundary, which is what these tests provoke
+            vi.spyOn(console, 'error').mockImplementation(() => {});
+        });
+
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
+
         it('handles render errors with default error boundary and reports errors to ILC', async () => {
             const err = new Error('test err');
             const lifecycles = ilcAdapterReact({
@@ -272,7 +276,7 @@ describe('ilc-adapter-react', () => {
             await pause();
 
             expect(ilcErrHandler.mock.calls.length).toBe(1);
-            expect(ilcErrHandler.mock.calls[0][0]).toBe(err);
+            expect(ilcErrHandler.mock.calls[0]?.[0]).toBe(err);
             expect(root.innerHTML).toContain('Something went wrong. Please try to reload the page.');
 
             await lifecycles.unmount(appProps);

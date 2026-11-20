@@ -1,3 +1,4 @@
-import IlcSdk, { AppAssets } from 'ilc-sdk';
+import IlcSdk from 'ilc-sdk';
 
-export { IlcSdk, AppAssets };
+export type { AppAssets } from 'ilc-sdk';
+export { IlcSdk };
