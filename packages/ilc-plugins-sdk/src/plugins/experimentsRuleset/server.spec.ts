@@ -1,22 +1,20 @@
-import chai from 'chai';
-
 import plugin from './server';
-import { ExperimentsRulesetPlugin, Ruleset } from './server.types';
+import type { ExperimentsRulesetPlugin, Ruleset } from './server.types';
 
 describe('experimentsRuleset plugin', () => {
     it('should have correct plugin type', () => {
-        chai.expect(plugin.type).to.equal('experimentsRuleset');
+        expect(plugin.type).toBe('experimentsRuleset');
     });
 
     it('should offer no ruleset at all', () => {
         // `undefined`, not `{}`. The two are different answers: `undefined` says "ask your own
         // configuration", while `{}` says "there are deliberately no experiments right now" and is
         // honoured as given. The default has nothing to offer, so it says so.
-        chai.expect(plugin.getRuleset()).to.equal(undefined);
+        expect(plugin.getRuleset()).toBeUndefined();
     });
 
     it('should keep offering nothing on every call', () => {
-        chai.expect(plugin.getRuleset()).to.equal(plugin.getRuleset());
+        expect(plugin.getRuleset()).toBe(plugin.getRuleset());
     });
 
     it('should let an implementation express a deliberately empty ruleset', () => {
@@ -29,8 +27,8 @@ describe('experimentsRuleset plugin', () => {
             getRuleset: () => ({}),
         };
 
-        chai.expect(emptyOnPurpose.getRuleset()).to.deep.equal({});
-        chai.expect(emptyOnPurpose.getRuleset()).to.not.equal(undefined);
+        expect(emptyOnPurpose.getRuleset()).toEqual({});
+        expect(emptyOnPurpose.getRuleset()).not.toBeUndefined();
     });
 
     it('should be assignable to a ruleset source that returns the SDK ruleset type', () => {
@@ -38,6 +36,6 @@ describe('experimentsRuleset plugin', () => {
         // "something that returns a Ruleset synchronously, or nothing" is expected, with no adapter.
         const source: { getRuleset(): Ruleset | undefined } = plugin;
 
-        chai.expect(source.getRuleset()).to.equal(undefined);
+        expect(source.getRuleset()).toBeUndefined();
     });
 });

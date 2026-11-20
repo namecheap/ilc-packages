@@ -1,7 +1,0 @@
-{
-    "spec": "**/*.spec.ts",
-    "require": "ts-node/register",
-    "timeout": 5000,
-    "exclude": "node_modules/**/*",
-    "exit": true
-}

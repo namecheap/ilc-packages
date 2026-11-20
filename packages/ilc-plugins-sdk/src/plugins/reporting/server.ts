@@ -1,16 +1,10 @@
+import httpHeaders from 'http-headers';
+import hyperid from 'hyperid';
 import pino from 'pino';
 
-import {
-    PassThrough,
-} from 'stream';
+import { PassThrough } from 'stream';
 
-import {
-    IlcError,
-    IlcReportingPlugin,
-} from './server.types';
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const httpHeaders = require('http-headers');
+import { IlcError, IlcReportingPlugin } from './server.types';
 
 const pinoConf: pino.LoggerOptions = {
     level: 'info',
@@ -32,19 +26,19 @@ const pinoConf: pino.LoggerOptions = {
                 }
 
                 const logObj: {
-                    type: string,
-                    message: string,
-                    stack?: Array<string>,
+                    type: string;
+                    message: string;
+                    stack?: Array<string> | undefined;
                     additionalInfo?: {
-                        [key: string]: any,
-                    },
+                        [key: string]: any;
+                    };
                     causeData?: Array<{
-                        [key: string]: any,
-                    }>,
+                        [key: string]: any;
+                    }>;
                 } = {
                     type: err.name,
                     message: err.message,
-                    stack: err.stack?.split("\n"),
+                    stack: err.stack?.split('\n'),
                 };
 
                 if (err.data) {
@@ -59,7 +53,7 @@ const pinoConf: pino.LoggerOptions = {
             }
 
             return method.apply(this, inputArgs as Parameters<pino.LogFn>);
-        }
+        },
     },
     serializers: {
         res(res) {
@@ -72,14 +66,14 @@ const pinoConf: pino.LoggerOptions = {
                 const headers = httpHeaders(res, true);
                 if (headers['location']) {
                     r.headers = {
-                        location: headers['location']
+                        location: headers['location'],
                     };
                 }
             }
 
             return r;
-        }
-    }
+        },
+    },
 };
 
 const plugin: IlcReportingPlugin = {
@@ -88,9 +82,12 @@ const plugin: IlcReportingPlugin = {
      * We need this to being able to capture stdout of the app
      * As for pure "process.stdout" uses faster logs output via sonic-boom which is hard to intercept
      */
-    logger: pino(pinoConf, process.env.NODE_ENV === 'test' ? new PassThrough().pipe(process.stdout) : process.stdout),
+    logger: pino(
+        pinoConf,
+        process.env['NODE_ENV'] === 'test' ? new PassThrough().pipe(process.stdout) : process.stdout,
+    ),
     requestIdLogLabel: 'operationId',
-    genReqId: require('hyperid')({urlSafe: true, fixedLength: true}),
+    genReqId: hyperid({ urlSafe: true, fixedLength: true }),
 };
 
 export { pinoConf, plugin };

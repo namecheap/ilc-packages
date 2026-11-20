@@ -16,8 +16,8 @@ function logMethod(methodName: ConsoleLogMethods) {
     return (...args: [string, IlcLogInfo]) => {
         const [msg, logInfo] = args;
         const errorInfo = {};
-       
-        if (logInfo) {        
+
+        if (logInfo) {
             if (isError(logInfo)) {
                 Object.assign(errorInfo, {
                     type: logInfo.name,
@@ -50,7 +50,7 @@ export const consoleReportingPlugin: IlcReportingPlugin = {
     logger: {
         warn: logMethod('warn'),
         info: logMethod('info'),
-        fatal: logMethod('error'), 
+        fatal: logMethod('error'),
         error: logMethod('error'),
         debug: logMethod('debug'),
         trace: logMethod('trace'),
@@ -59,26 +59,26 @@ export const consoleReportingPlugin: IlcReportingPlugin = {
 };
 
 export const reportingPluginsWrapper = (reporters: IlcReportingPlugin[]): IlcReportingPlugin => {
-    return  {
+    return {
         type: 'reporting',
         logger: {
             warn: (...args) => {
-                reporters.forEach(reporter => reporter.logger.warn(...args));
+                reporters.forEach((reporter) => reporter.logger.warn(...args));
             },
             info: (...args) => {
-                reporters.forEach(reporter => reporter.logger.info(...args));
+                reporters.forEach((reporter) => reporter.logger.info(...args));
             },
             fatal: (...args) => {
-                reporters.forEach(reporter => reporter.logger.fatal(...args));
+                reporters.forEach((reporter) => reporter.logger.fatal(...args));
             },
             error: (...args) => {
-                reporters.forEach(reporter => reporter.logger.error(...args));
+                reporters.forEach((reporter) => reporter.logger.error(...args));
             },
             debug: (...args) => {
-                reporters.forEach(reporter => reporter.logger.debug(...args));
+                reporters.forEach((reporter) => reporter.logger.debug(...args));
             },
             trace: (...args) => {
-                reporters.forEach(reporter => reporter.logger.trace(...args));
+                reporters.forEach((reporter) => reporter.logger.trace(...args));
             },
         },
         setConfig: (...args) => reporters.forEach((reporter) => reporter.setConfig(...args)),

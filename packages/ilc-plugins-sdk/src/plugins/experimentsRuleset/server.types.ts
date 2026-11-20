@@ -1,6 +1,4 @@
-import {
-    Plugin,
-} from '../../pluginManager/server.types';
+import { Plugin } from '../../pluginManager/server.types';
 
 /*
  * The ruleset shape is declared here rather than imported from ILC on purpose: `ilc` depends on

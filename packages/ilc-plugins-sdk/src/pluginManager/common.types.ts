@@ -1,7 +1,7 @@
 export interface Plugin {
-    type: string,
-};
+    type: string;
+}
 
 export interface Context extends Function {
-    keys: () => Array<string>,
+    keys: () => Array<string>;
 }

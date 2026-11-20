@@ -1,14 +1,11 @@
 {
-  "compilerOptions": {
-    "target": "ES2019",
-    "module": "commonjs",
-    "declaration": true,
-    "outDir": "./dist",
-    "strict": true,
-    "types" : ["node", "mocha"],
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true
-  },
-  "include": ["src"],
-  "exclude": ["node_modules", "**/*.spec.ts"]
+    // Package-wide options; the project configs below extend this file.
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        // Published as CommonJS: there is no `"type": "module"` in package.json, and this flag would
+        // force `import x = require()` syntax in CommonJS files.
+        "verbatimModuleSyntax": false
+    },
+    "files": [],
+    "references": [{ "path": "./tsconfig.lib.json" }, { "path": "./tsconfig.test.json" }]
 }

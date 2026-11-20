@@ -1,8 +1,7 @@
-import chai from 'chai';
-import http from 'http';
+import type http from 'node:http';
 
 import plugin from './server';
-import { I18n, I18nConfig } from './server.types';
+import type { I18n, I18nConfig } from './server.types';
 
 describe('i18nParamsDetection plugin', () => {
     const mockI18n: I18n = {
@@ -24,7 +23,7 @@ describe('i18nParamsDetection plugin', () => {
     };
 
     it('should have correct plugin type', () => {
-        chai.expect(plugin.type).to.equal('i18nParamsDetection');
+        expect(plugin.type).toBe('i18nParamsDetection');
     });
 
     it('should return storedConfig when storedConfigFromCookie is provided', async () => {
@@ -40,7 +39,7 @@ describe('i18nParamsDetection plugin', () => {
 
         const result = await plugin.detectI18nConfig(req, mockI18n, storedConfig, storedConfigFromCookie);
 
-        chai.expect(result).to.deep.equal(storedConfig);
+        expect(result).toEqual(storedConfig);
     });
 
     it('should parse URL and update locale when storedConfigFromCookie is undefined', async () => {
@@ -51,8 +50,8 @@ describe('i18nParamsDetection plugin', () => {
 
         const result = await plugin.detectI18nConfig(req, mockI18n, storedConfig);
 
-        chai.expect(result.locale).to.equal('en-US');
-        chai.expect(result.currency).to.equal(storedConfig.currency);
+        expect(result.locale).toBe('en-US');
+        expect(result.currency).toBe(storedConfig.currency);
     });
 
     it('should return storedConfig when storedConfigFromCookie is undefined and req.url is undefined', async () => {
@@ -62,7 +61,7 @@ describe('i18nParamsDetection plugin', () => {
 
         const result = await plugin.detectI18nConfig(req, mockI18n, storedConfig);
 
-        chai.expect(result).to.deep.equal(storedConfig);
+        expect(result).toEqual(storedConfig);
     });
 
     it('should preserve currency from storedConfig when updating locale', async () => {
@@ -78,7 +77,7 @@ describe('i18nParamsDetection plugin', () => {
 
         const result = await plugin.detectI18nConfig(req, mockI18n, customStoredConfig);
 
-        chai.expect(result.locale).to.equal('en-US');
-        chai.expect(result.currency).to.equal('JPY');
+        expect(result.locale).toBe('en-US');
+        expect(result.currency).toBe('JPY');
     });
 });

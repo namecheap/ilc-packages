@@ -5,7 +5,6 @@
 
 SDK intended for use by developers that build plugins for [Isomorphic Layout Composer](https://github.com/namecheap/ilc).
 
-
 ## Installation
 
 ```bash
@@ -15,8 +14,9 @@ $ npm i ilc-plugins-sdk
 ## Plugins naming convention
 
 In order to be discoverable by ILC plugin manager - NPM package that contains plugin should be named in one of the following ways:
-* `ilc-plugin-*` Example: `ilc-plugin-myreporting`
-* `@*/ilc-plugin-*` Example: `@myorg/ilc-plugin-myreporting`
+
+- `ilc-plugin-*` Example: `ilc-plugin-myreporting`
+- `@*/ilc-plugin-*` Example: `@myorg/ilc-plugin-myreporting`
 
 ## Installation of the plugin
 
@@ -44,11 +44,9 @@ It will be detected via `main` property in your `package.json`.
 Should implement `IlcReportingPlugin` interface. Allows customizing logs output of the ILC container and optionally set
 custom behaviour for request ID generation & handling.
 
-
 #### I18n params detection plugin
 
 Should implement `I18nParamsDetectionPlugin` interface.
-
 
 #### Experiments ruleset plugin
 
@@ -72,11 +70,13 @@ for a browser side implementation expected to be in `browser.js` file in the roo
 Same approach should be used to fetch necessary interfaces for the server & browser side implementation:
 
 Server side:
+
 ```typescript
 import { TransitionHooksPlugin } from 'ilc-plugins-sdk';
 ```
 
 Browser side:
+
 ```typescript
 import { TransitionHooksPlugin } from 'ilc-plugins-sdk/browser';
 ```
@@ -84,6 +84,7 @@ import { TransitionHooksPlugin } from 'ilc-plugins-sdk/browser';
 #### Transition hooks plugin
 
 Allows to set up route change hooks which may:
+
 - Prevent routing & display some UI.
 - Perform the redirect to another page.
 - Allow route change.

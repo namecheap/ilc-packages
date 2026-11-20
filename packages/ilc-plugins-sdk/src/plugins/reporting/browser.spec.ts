@@ -1,120 +1,118 @@
-import { expect } from 'chai';
-import { createSandbox, SinonSandbox, SinonStub, stub } from 'sinon';
-import { IlcLogger, IlcReportingPlugin } from './browser.types';
+import type { Mock } from 'vitest';
+
+import type { IlcLogger, IlcReportingPlugin } from './browser.types';
 import { consoleReportingPlugin, reportingPluginsWrapper } from './browser';
 
 describe('Reporting browser', () => {
     describe('Console reporting plugin', () => {
         it('should have type reporting', () => {
-            expect(consoleReportingPlugin.type).to.equal('reporting');
+            expect(consoleReportingPlugin.type).toBe('reporting');
         });
 
         describe('logger', () => {
-            let sandbox: SinonSandbox;
-            let warnStub: SinonStub;
-            let infoStub: SinonStub;
-            let errorStub: SinonStub;
-            let debugStub: SinonStub;
-            let traceStub: SinonStub;
+            let warnStub: Mock;
+            let infoStub: Mock;
+            let errorStub: Mock;
+            let debugStub: Mock;
+            let traceStub: Mock;
 
             let logger: IlcLogger;
 
             beforeEach(() => {
                 logger = consoleReportingPlugin.logger;
-                sandbox = createSandbox();
 
-                warnStub = sandbox.stub(console, 'warn');
-                infoStub = sandbox.stub(console, 'info');
-                errorStub = sandbox.stub(console, 'error');
-                debugStub = sandbox.stub(console, 'debug');
-                traceStub = sandbox.stub(console, 'trace');
+                warnStub = vi.spyOn(console, 'warn').mockImplementation(() => {});
+                infoStub = vi.spyOn(console, 'info').mockImplementation(() => {});
+                errorStub = vi.spyOn(console, 'error').mockImplementation(() => {});
+                debugStub = vi.spyOn(console, 'debug').mockImplementation(() => {});
+                traceStub = vi.spyOn(console, 'trace').mockImplementation(() => {});
             });
 
             afterEach(() => {
-                sandbox.restore();
+                vi.restoreAllMocks();
             });
 
-            describe('message',() => {
+            describe('message', () => {
                 it('should invoke console.warn on logger.warn', () => {
                     logger.warn('Warn message');
-                    expect(warnStub.calledOnce).to.be.true;
-                    expect(warnStub.calledWithExactly('Warn message')).to.be.true;
+                    expect(warnStub).toHaveBeenCalledTimes(1);
+                    expect(warnStub).toHaveBeenCalledWith('Warn message');
                 });
 
                 it('should invoke console.info on logger.info', () => {
                     logger.info('Info message');
-                    expect(infoStub.calledOnce).to.be.true;
-                    expect(infoStub.calledWithExactly('Info message')).to.be.true;
+                    expect(infoStub).toHaveBeenCalledTimes(1);
+                    expect(infoStub).toHaveBeenCalledWith('Info message');
                 });
 
                 it('should invoke console.error on logger.error', () => {
                     logger.error('Error message');
-                    expect(errorStub.calledOnce).to.be.true;
-                    expect(errorStub.calledWithExactly('Error message')).to.be.true;
+                    expect(errorStub).toHaveBeenCalledTimes(1);
+                    expect(errorStub).toHaveBeenCalledWith('Error message');
                 });
-                
+
                 it('should invoke console.error on logger.fatal', () => {
-                    logger.error('Fatal message');
-                    expect(errorStub.calledOnce).to.be.true;
-                    expect(errorStub.calledWithExactly('Fatal message')).to.be.true;
+                    logger.fatal('Fatal message');
+                    expect(errorStub).toHaveBeenCalledTimes(1);
+                    expect(errorStub).toHaveBeenCalledWith('Fatal message');
                 });
 
                 it('should invoke console.debug on logger.debug', () => {
                     logger.debug('Debug message');
-                    expect(debugStub.calledOnce).to.be.true;
-                    expect(debugStub.calledWithExactly('Debug message')).to.be.true;
+                    expect(debugStub).toHaveBeenCalledTimes(1);
+                    expect(debugStub).toHaveBeenCalledWith('Debug message');
                 });
 
                 it('should invoke console.trace on logger.trace', () => {
                     logger.trace('Trace message');
-                    expect(traceStub.calledOnce).to.be.true;
-                    expect(traceStub.calledWithExactly('Trace message')).to.be.true;
+                    expect(traceStub).toHaveBeenCalledTimes(1);
+                    expect(traceStub).toHaveBeenCalledWith('Trace message');
                 });
             });
 
-            describe('message with plain object',() => {
+            describe('message with plain object', () => {
                 const logObject = {
-                    hot: 'cake'
+                    hot: 'cake',
                 };
 
                 it('should invoke console.warn on logger.warn', () => {
                     logger.warn('Warn message', logObject);
-                    expect(warnStub.calledOnce).to.be.true;
-                    expect(warnStub.calledWithExactly('Warn message', logObject)).to.be.true;
+                    expect(warnStub).toHaveBeenCalledTimes(1);
+                    expect(warnStub).toHaveBeenCalledWith('Warn message', logObject);
                 });
 
                 it('should invoke console.info on logger.info', () => {
                     logger.info('Info message', logObject);
-                    expect(infoStub.calledOnce).to.be.true;
-                    expect(infoStub.calledWithExactly('Info message', logObject)).to.be.true;
+                    expect(infoStub).toHaveBeenCalledTimes(1);
+                    expect(infoStub).toHaveBeenCalledWith('Info message', logObject);
                 });
 
                 it('should invoke console.error on logger.error', () => {
                     logger.error('Error message', logObject);
-                    expect(errorStub.calledOnce).to.be.true;
-                    expect(errorStub.calledWithExactly('Error message', logObject)).to.be.true;
+                    expect(errorStub).toHaveBeenCalledTimes(1);
+                    expect(errorStub).toHaveBeenCalledWith('Error message', logObject);
                 });
-                
+
                 it('should invoke console.error on logger.fatal', () => {
-                    logger.error('Fatal message', logObject);
-                    expect(errorStub.calledOnce).to.be.true;
-                    expect(errorStub.calledWithExactly('Fatal message', logObject)).to.be.true;
+                    logger.fatal('Fatal message', logObject);
+                    expect(errorStub).toHaveBeenCalledTimes(1);
+                    expect(errorStub).toHaveBeenCalledWith('Fatal message', logObject);
                 });
 
                 it('should invoke console.debug on logger.debug', () => {
                     logger.debug('Debug message', logObject);
-                    expect(debugStub.calledOnce).to.be.true;
-                    expect(debugStub.calledWithExactly('Debug message', logObject)).to.be.true;
+                    expect(debugStub).toHaveBeenCalledTimes(1);
+                    expect(debugStub).toHaveBeenCalledWith('Debug message', logObject);
                 });
 
                 it('should invoke console.trace on logger.trace', () => {
                     logger.trace('Trace message', logObject);
-                    expect(traceStub.calledOnce).to.be.true;
-                    expect(traceStub.calledWithExactly('Trace message', logObject)).to.be.true;
+                    expect(traceStub).toHaveBeenCalledTimes(1);
+                    expect(traceStub).toHaveBeenCalledWith('Trace message', logObject);
                 });
             });
 
-            describe('message with error',() => {
+            describe('message with error', () => {
                 const logError = new Error('Log error');
                 const logErrorInfo = JSON.stringify({
                     type: 'Error',
@@ -124,42 +122,42 @@ describe('Reporting browser', () => {
 
                 it('should transform error before invoke console.warn on logger.warn', () => {
                     logger.warn('Warn message', logError);
-                    expect(warnStub.calledOnce).to.be.true;
-                    expect(warnStub.calledWithExactly('Warn message', logErrorInfo, logError)).to.be.true;
+                    expect(warnStub).toHaveBeenCalledTimes(1);
+                    expect(warnStub).toHaveBeenCalledWith('Warn message', logErrorInfo, logError);
                 });
 
                 it('should transform error before console.info on logger.info', () => {
                     logger.info('Info message', logError);
-                    expect(infoStub.calledOnce).to.be.true;
-                    expect(infoStub.calledWithExactly('Info message', logErrorInfo, logError)).to.be.true;
+                    expect(infoStub).toHaveBeenCalledTimes(1);
+                    expect(infoStub).toHaveBeenCalledWith('Info message', logErrorInfo, logError);
                 });
 
                 it('should transform error before console.error on logger.error', () => {
                     logger.error('Error message', logError);
-                    expect(errorStub.calledOnce).to.be.true;
-                    expect(errorStub.calledWithExactly('Error message', logErrorInfo, logError)).to.be.true;
+                    expect(errorStub).toHaveBeenCalledTimes(1);
+                    expect(errorStub).toHaveBeenCalledWith('Error message', logErrorInfo, logError);
                 });
-                
+
                 it('should transform error before console.error on logger.fatal', () => {
-                    logger.error('Fatal message', logError);
-                    expect(errorStub.calledOnce).to.be.true;
-                    expect(errorStub.calledWithExactly('Fatal message', logErrorInfo, logError)).to.be.true;
+                    logger.fatal('Fatal message', logError);
+                    expect(errorStub).toHaveBeenCalledTimes(1);
+                    expect(errorStub).toHaveBeenCalledWith('Fatal message', logErrorInfo, logError);
                 });
 
                 it('should transform error before console.debug on logger.debug', () => {
                     logger.debug('Debug message', logError);
-                    expect(debugStub.calledOnce).to.be.true;
-                    expect(debugStub.calledWithExactly('Debug message', logErrorInfo, logError)).to.be.true;
+                    expect(debugStub).toHaveBeenCalledTimes(1);
+                    expect(debugStub).toHaveBeenCalledWith('Debug message', logErrorInfo, logError);
                 });
 
                 it('should transform error before console.trace on logger.trace', () => {
                     logger.trace('Trace message', logError);
-                    expect(traceStub.calledOnce).to.be.true;
-                    expect(traceStub.calledWithExactly('Trace message', logErrorInfo, logError)).to.be.true;
+                    expect(traceStub).toHaveBeenCalledTimes(1);
+                    expect(traceStub).toHaveBeenCalledWith('Trace message', logErrorInfo, logError);
                 });
             });
 
-            describe('message with ilcError',() => {
+            describe('message with ilcError', () => {
                 const logError = Object.assign(new Error('Log error'), {
                     data: {
                         hot: 'cake',
@@ -181,41 +179,40 @@ describe('Reporting browser', () => {
 
                 it('should transform error before invoke console.warn on logger.warn', () => {
                     logger.warn('Warn message', logError);
-                    expect(warnStub.calledOnce).to.be.true;
-                    expect(warnStub.calledWithExactly('Warn message', logErrorInfo, logError)).to.be.true;
+                    expect(warnStub).toHaveBeenCalledTimes(1);
+                    expect(warnStub).toHaveBeenCalledWith('Warn message', logErrorInfo, logError);
                 });
 
                 it('should transform error before console.info on logger.info', () => {
                     logger.info('Info message', logError);
-                    expect(infoStub.calledOnce).to.be.true;
-                    expect(infoStub.calledWithExactly('Info message', logErrorInfo, logError)).to.be.true;
+                    expect(infoStub).toHaveBeenCalledTimes(1);
+                    expect(infoStub).toHaveBeenCalledWith('Info message', logErrorInfo, logError);
                 });
 
                 it('should transform error before console.error on logger.error', () => {
                     logger.error('Error message', logError);
-                    expect(errorStub.calledOnce).to.be.true;
-                    expect(errorStub.calledWithExactly('Error message', logErrorInfo, logError)).to.be.true;
+                    expect(errorStub).toHaveBeenCalledTimes(1);
+                    expect(errorStub).toHaveBeenCalledWith('Error message', logErrorInfo, logError);
                 });
-                
+
                 it('should transform error before console.error on logger.fatal', () => {
-                    logger.error('Fatal message', logError);
-                    expect(errorStub.calledOnce).to.be.true;
-                    expect(errorStub.calledWithExactly('Fatal message', logErrorInfo, logError)).to.be.true;
+                    logger.fatal('Fatal message', logError);
+                    expect(errorStub).toHaveBeenCalledTimes(1);
+                    expect(errorStub).toHaveBeenCalledWith('Fatal message', logErrorInfo, logError);
                 });
 
                 it('should transform error before console.debug on logger.debug', () => {
                     logger.debug('Debug message', logError);
-                    expect(debugStub.calledOnce).to.be.true;
-                    expect(debugStub.calledWithExactly('Debug message', logErrorInfo, logError)).to.be.true;
+                    expect(debugStub).toHaveBeenCalledTimes(1);
+                    expect(debugStub).toHaveBeenCalledWith('Debug message', logErrorInfo, logError);
                 });
 
                 it('should transform error before console.trace on logger.trace', () => {
                     logger.trace('Trace message', logError);
-                    expect(traceStub.calledOnce).to.be.true;
-                    expect(traceStub.calledWithExactly('Trace message', logErrorInfo, logError)).to.be.true;
+                    expect(traceStub).toHaveBeenCalledTimes(1);
+                    expect(traceStub).toHaveBeenCalledWith('Trace message', logErrorInfo, logError);
                 });
             });
-
         });
     });
 
@@ -223,9 +220,9 @@ describe('Reporting browser', () => {
         let firstStubReporter: IlcReportingPlugin;
         let secondStubReporter: IlcReportingPlugin;
         let wrappedReporingPlugin: IlcReportingPlugin;
-        
+
         const logObject = {
-            hot: 'cake'
+            hot: 'cake',
         };
 
         const logError = new Error('Log error');
@@ -238,55 +235,47 @@ describe('Reporting browser', () => {
             errorId: '7216ea27-408a-4a4f-82d5-8f47fd030e8e',
         });
 
+        function stubReporter(): IlcReportingPlugin {
+            return {
+                type: 'reporting',
+                logger: {
+                    warn: vi.fn(),
+                    info: vi.fn(),
+                    fatal: vi.fn(),
+                    error: vi.fn(),
+                    debug: vi.fn(),
+                    trace: vi.fn(),
+                },
+                setConfig: vi.fn(),
+            };
+        }
+
         beforeEach(() => {
-            firstStubReporter = {
-                type: 'reporting',
-                logger: {
-                    warn: stub(),
-                    info: stub(), 
-                    fatal: stub(),
-                    error: stub(),
-                    debug: stub(),
-                    trace: stub(),
-                },
-                setConfig: stub(),
-            };
-            
-            secondStubReporter = {
-                type: 'reporting',
-                logger: {
-                    warn: stub(),
-                    info: stub(), 
-                    fatal: stub(),
-                    error: stub(),
-                    debug: stub(),
-                    trace: stub(),
-                },
-                setConfig: stub(),
-            };
-    
+            firstStubReporter = stubReporter();
+            secondStubReporter = stubReporter();
+
             wrappedReporingPlugin = reportingPluginsWrapper([firstStubReporter, secondStubReporter]);
         });
 
         it('should have reporting type', () => {
-            expect(wrappedReporingPlugin.type).to.equal('reporting');
+            expect(wrappedReporingPlugin.type).toBe('reporting');
         });
 
         it('shoud set config on every wrapped reporter', () => {
             const ilcConfig = {
-                getConfig: stub(),
-                getConfigForApps: stub(),
-                getConfigForAppByName: stub(),
-                getSettings: stub(),
-                getSettingsByKey: stub(),
-                getConfigForSharedLibs: stub(),
-                getConfigForSharedLibsByName: stub(),
+                getConfig: vi.fn(),
+                getConfigForApps: vi.fn(),
+                getConfigForAppByName: vi.fn(),
+                getSettings: vi.fn(),
+                getSettingsByKey: vi.fn(),
+                getConfigForSharedLibs: vi.fn(),
+                getConfigForSharedLibsByName: vi.fn(),
             };
 
             wrappedReporingPlugin.setConfig(ilcConfig);
 
-            expect((firstStubReporter.setConfig as SinonStub).calledWithExactly(ilcConfig)).to.be.true;
-            expect((secondStubReporter.setConfig as SinonStub).calledWithExactly(ilcConfig)).to.be.true;
+            expect(firstStubReporter.setConfig).toHaveBeenCalledWith(ilcConfig);
+            expect(secondStubReporter.setConfig).toHaveBeenCalledWith(ilcConfig);
         });
 
         const methods: (keyof IlcLogger)[] = ['warn', 'info', 'debug', 'trace', 'fatal', 'error'];
@@ -297,15 +286,12 @@ describe('Reporting browser', () => {
                 wrappedReporingPlugin.logger[methodName](`${methodName} message`, logError);
                 wrappedReporingPlugin.logger[methodName](`${methodName} message`, logIlcError);
 
-                expect((firstStubReporter.logger[methodName] as SinonStub).calledWithExactly(`${methodName} message`)).to.be.true;
-                expect((firstStubReporter.logger[methodName] as SinonStub).calledWithExactly(`${methodName} message`, logObject)).to.be.true;
-                expect((firstStubReporter.logger[methodName] as SinonStub).calledWithExactly(`${methodName} message`, logError)).to.be.true;
-                expect((firstStubReporter.logger[methodName] as SinonStub).calledWithExactly(`${methodName} message`, logIlcError)).to.be.true;
-
-                expect((secondStubReporter.logger[methodName] as SinonStub).calledWithExactly(`${methodName} message`)).to.be.true;
-                expect((secondStubReporter.logger[methodName] as SinonStub).calledWithExactly(`${methodName} message`, logObject)).to.be.true;
-                expect((secondStubReporter.logger[methodName] as SinonStub).calledWithExactly(`${methodName} message`, logError)).to.be.true;
-                expect((secondStubReporter.logger[methodName] as SinonStub).calledWithExactly(`${methodName} message`, logIlcError)).to.be.true;
+                for (const reporter of [firstStubReporter, secondStubReporter]) {
+                    expect(reporter.logger[methodName]).toHaveBeenCalledWith(`${methodName} message`);
+                    expect(reporter.logger[methodName]).toHaveBeenCalledWith(`${methodName} message`, logObject);
+                    expect(reporter.logger[methodName]).toHaveBeenCalledWith(`${methodName} message`, logError);
+                    expect(reporter.logger[methodName]).toHaveBeenCalledWith(`${methodName} message`, logIlcError);
+                }
             });
         });
     });

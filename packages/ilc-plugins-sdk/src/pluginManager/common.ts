@@ -1,16 +1,16 @@
-import {
-    Plugin,
-    Context,
-} from './common.types';
+import { Plugin, Context } from './common.types';
 
 function isContext(value: unknown): value is Context {
-   return typeof value === 'function' && typeof (value as any).keys === 'function';
+    return typeof value === 'function' && typeof (value as Partial<Context>).keys === 'function';
 }
 
 export default abstract class PluginManager {
     protected plugins: Plugin[] = [];
 
-    constructor(private pluginTypes: string[], ...plugins: Plugin[] | Context[]) {
+    constructor(
+        private pluginTypes: string[],
+        ...plugins: Plugin[] | Context[]
+    ) {
         this.init(...plugins);
     }
 
@@ -52,4 +52,4 @@ export default abstract class PluginManager {
         console.info(`ILC plugins SDK: Enabling "${plugin.type}" plugin ...`);
         this.plugins.push(plugin);
     }
-};
+}

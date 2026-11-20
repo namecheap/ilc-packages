@@ -12,7 +12,7 @@ export interface TransitionContinue {
 }
 
 export interface TransitionRedirect {
-    type: 'redirect'
+    type: 'redirect';
     newLocation: string;
     /**
      * HTTP redirect code

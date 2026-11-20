@@ -1,20 +1,9 @@
-import chai from 'chai';
-import assert from 'assert';
-
-import {
-    PluginManagerPublicApi,
-} from './server.types';
-
-
-import { Plugin } from './common.types';
-
+import type { PluginManagerPublicApi } from './server.types';
+import type { Plugin } from './common.types';
 import PluginManager from './server';
-
-describe('Typescript usage suite', () => {
-    it('should be able to execute a test', () => {
-        assert.strictEqual(true, true);
-    });
-});
+import { plugin as defaultReportingPlugin } from '../plugins/reporting/server';
+import defaultI18nParamsDetectionPlugin from '../plugins/i18nParamsDetection/server';
+import defaultTransitionHooksPlugin from '../plugins/transitionHooks/server';
 
 describe('PluginManager', () => {
     let pluginManager: PluginManagerPublicApi;
@@ -44,12 +33,6 @@ describe('PluginManager', () => {
             method: () => {},
         };
 
-        const experimentsRulesetPlugin = {
-            type: 'experimentsRuleset',
-            property: 'propertyOfExperimentsRulesetPlugin',
-            method: () => {},
-        };
-
         const nonExistentType = {
             type: 'nonExistentType',
             property: 'propertyOfPluginWithNonExistentType',
@@ -60,7 +43,6 @@ describe('PluginManager', () => {
             reporting: 'node_modules/@test/ilc-plugin-reporting',
             i18nParamsDetection: 'node_modules/@test/ilc-plugin-i18n-params-detection',
             transitionHooks: 'node_modules/@test/ilc-plugin-transition-hooks',
-            experimentsRuleset: 'node_modules/@test/ilc-plugin-experiments-ruleset',
             cloneOfReporting: 'node_modules/@test/ilc-plugin-that-is-clone-of-reporting-plugin',
             nonExistentType: 'node_modules/@test/ilc-plugin-with-non-existent-type',
         } as const;
@@ -69,7 +51,6 @@ describe('PluginManager', () => {
             [PluginPaths.reporting]: reportingPlugin,
             [PluginPaths.i18nParamsDetection]: i18nParamsDetectionPlugin,
             [PluginPaths.transitionHooks]: { default: transitionHooksPlugin },
-            [PluginPaths.experimentsRuleset]: { default: experimentsRulesetPlugin },
             [PluginPaths.cloneOfReporting]: cloneOfReporting,
             [PluginPaths.nonExistentType]: nonExistentType,
         };
@@ -78,13 +59,12 @@ describe('PluginManager', () => {
             reportingPlugin,
             i18nParamsDetectionPlugin,
             transitionHooksPlugin,
-            experimentsRulesetPlugin,
             cloneOfReporting,
             nonExistentType,
         ];
 
         describe('from context', () => {
-            function context(pluginPath: typeof PluginPaths[keyof typeof PluginPaths]) {
+            function context(pluginPath: (typeof PluginPaths)[keyof typeof PluginPaths]) {
                 return plugins[pluginPath];
             }
 
@@ -97,19 +77,15 @@ describe('PluginManager', () => {
             });
 
             it('should return reporting plugin', () => {
-                chai.expect(pluginManager.getReportingPlugin()).to.be.equals(reportingPlugin);
+                expect(pluginManager.getReportingPlugin()).toBe(reportingPlugin);
             });
 
             it('should return i18n params detection plugin', () => {
-                chai.expect(pluginManager.getI18nParamsDetectionPlugin()).to.be.equals(i18nParamsDetectionPlugin);
+                expect(pluginManager.getI18nParamsDetectionPlugin()).toBe(i18nParamsDetectionPlugin);
             });
 
             it('should return transition hooks plugin', () => {
-                chai.expect(pluginManager.getTransitionHooksPlugin()).to.be.equals(transitionHooksPlugin);
-            });
-
-            it('should return experiments ruleset plugin', () => {
-                chai.expect(pluginManager.getExperimentsRulesetPlugin()).to.be.equals(experimentsRulesetPlugin);
+                expect(pluginManager.getTransitionHooksPlugin()).toBe(transitionHooksPlugin);
             });
         });
 
@@ -119,25 +95,20 @@ describe('PluginManager', () => {
             });
 
             it('should return reporting plugin', () => {
-                chai.expect(pluginManager.getReportingPlugin()).to.be.equals(reportingPlugin);
+                expect(pluginManager.getReportingPlugin()).toBe(reportingPlugin);
             });
 
             it('should return i18n params detection plugin', () => {
-                chai.expect(pluginManager.getI18nParamsDetectionPlugin()).to.be.equals(i18nParamsDetectionPlugin);
+                expect(pluginManager.getI18nParamsDetectionPlugin()).toBe(i18nParamsDetectionPlugin);
             });
 
             it('should return transition hooks plugin', () => {
-                chai.expect(pluginManager.getTransitionHooksPlugin()).to.be.equals(transitionHooksPlugin);
-            });
-
-            it('should return experiments ruleset plugin', () => {
-                chai.expect(pluginManager.getExperimentsRulesetPlugin()).to.be.equals(experimentsRulesetPlugin);
+                expect(pluginManager.getTransitionHooksPlugin()).toBe(transitionHooksPlugin);
             });
         });
     });
 
     describe('when trying to get a plugin that is non existent', () => {
-
         describe('from context', () => {
             function context() {
                 return;
@@ -151,53 +122,34 @@ describe('PluginManager', () => {
                 pluginManager = new PluginManager(context);
             });
 
-            it('should return null while getting reporting plugin', () => {
-                chai.expect(pluginManager.getReportingPlugin()).to.be.eql(require('../plugins/reporting/server').plugin);
+            it('should return the default reporting plugin', () => {
+                expect(pluginManager.getReportingPlugin()).toEqual(defaultReportingPlugin);
             });
 
-            it('should return null while getting i18n params detection plugin', () => {
-                chai.expect(pluginManager.getI18nParamsDetectionPlugin()).to.be.eql(require('../plugins/i18nParamsDetection/server').default);
+            it('should return the default i18n params detection plugin', () => {
+                expect(pluginManager.getI18nParamsDetectionPlugin()).toEqual(defaultI18nParamsDetectionPlugin);
             });
 
-            it('should return null while getting transition hooks plugin', () => {
-                chai.expect(pluginManager.getTransitionHooksPlugin()).to.be.eql(require('../plugins/transitionHooks/server').default);
-            });
-
-            it('should return null while getting experiments ruleset plugin', () => {
-                chai.expect(pluginManager.getExperimentsRulesetPlugin()).to.be.eql(require('../plugins/experimentsRuleset/server').default);
-            });
-
-            it('should return a default experiments ruleset plugin that offers no ruleset', () => {
-                // The default of this kind contributes nothing, so a host with no plugin installed keeps
-                // using its own ruleset source. `undefined`, not `{}`: an empty ruleset is a real answer
-                // meaning "deliberately no experiments", which a host is expected to honour.
-                chai.expect(pluginManager.getExperimentsRulesetPlugin().getRuleset()).to.equal(undefined);
+            it('should return the default transition hooks plugin', () => {
+                expect(pluginManager.getTransitionHooksPlugin()).toEqual(defaultTransitionHooksPlugin);
             });
         });
 
         describe('from plugins', () => {
             beforeEach(() => {
-                pluginManager = new PluginManager(...[] as Plugin[]);
+                pluginManager = new PluginManager(...([] as Plugin[]));
             });
 
-            it('should return null while getting reporting plugin', () => {
-                chai.expect(pluginManager.getReportingPlugin()).to.be.eql(require('../plugins/reporting/server').plugin);
+            it('should return the default reporting plugin', () => {
+                expect(pluginManager.getReportingPlugin()).toEqual(defaultReportingPlugin);
             });
 
-            it('should return null while getting i18n params detection plugin', () => {
-                chai.expect(pluginManager.getI18nParamsDetectionPlugin()).to.be.eql(require('../plugins/i18nParamsDetection/server').default);
+            it('should return the default i18n params detection plugin', () => {
+                expect(pluginManager.getI18nParamsDetectionPlugin()).toEqual(defaultI18nParamsDetectionPlugin);
             });
 
-            it('should return null while getting transition hooks plugin', () => {
-                chai.expect(pluginManager.getTransitionHooksPlugin()).to.be.eql(require('../plugins/transitionHooks/server').default);
-            });
-
-            it('should return null while getting experiments ruleset plugin', () => {
-                chai.expect(pluginManager.getExperimentsRulesetPlugin()).to.be.eql(require('../plugins/experimentsRuleset/server').default);
-            });
-
-            it('should return a default experiments ruleset plugin that offers no ruleset', () => {
-                chai.expect(pluginManager.getExperimentsRulesetPlugin().getRuleset()).to.equal(undefined);
+            it('should return the default transition hooks plugin', () => {
+                expect(pluginManager.getTransitionHooksPlugin()).toEqual(defaultTransitionHooksPlugin);
             });
         });
     });

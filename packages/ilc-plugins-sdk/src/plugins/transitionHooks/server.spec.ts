@@ -1,37 +1,20 @@
-import http from 'http';
-import chai from 'chai';
-import sinon from 'sinon';
-import assert from 'assert';
+import type http from 'node:http';
 
-import {
-    cookieName,
-} from './browser';
-
+import { cookieName } from './browser';
 import plugin from './server';
-
-describe('Typescript usage suite', () => {
-    it('should be able to execute a test', () => {
-        assert.strictEqual(true, true);
-    });
-});
 
 describe('Server transition hooks suite', () => {
     const log = {
-        info: sinon.spy(),
-        fatal: sinon.spy(),
-        error: sinon.spy(),
-        warn: sinon.spy(),
-        debug: sinon.spy(),
-        trace: sinon.spy(),
+        info: vi.fn(),
+        fatal: vi.fn(),
+        error: vi.fn(),
+        warn: vi.fn(),
+        debug: vi.fn(),
+        trace: vi.fn(),
     };
 
     afterEach(() => {
-        log.info.resetHistory();
-        log.fatal.resetHistory();
-        log.error.resetHistory();
-        log.warn.resetHistory();
-        log.debug.resetHistory();
-        log.trace.resetHistory();
+        vi.clearAllMocks();
     });
 
     it('should continue if a route is not protected', async () => {
@@ -41,20 +24,20 @@ describe('Server transition hooks suite', () => {
             },
             url: '/some/url',
             hostname: 'example.com',
-            route: '/some/*'
+            route: '/some/*',
         };
 
         const req = {
             headers: {},
         } as http.IncomingMessage;
 
-        const results = await Promise.all(plugin.getTransitionHooks().map((hook) => hook({route, req, log})));
+        const results = await Promise.all(plugin.getTransitionHooks().map((hook) => hook({ route, req, log })));
 
         for (const result of results) {
-            chai.expect(result).to.be.eql({type: 'continue'});
+            expect(result).toEqual({ type: 'continue' });
         }
 
-        chai.expect(log.info.calledWith(route.meta)).to.be.true;
+        expect(log.info).toHaveBeenCalledWith(route.meta, expect.any(String));
     });
 
     it('should continue if req has a special cookie', async () => {
@@ -64,7 +47,7 @@ describe('Server transition hooks suite', () => {
             },
             url: '/some/url',
             hostname: 'example.com',
-            route: '/some/*'
+            route: '/some/*',
         };
 
         const req = {
@@ -73,13 +56,13 @@ describe('Server transition hooks suite', () => {
             },
         } as http.IncomingMessage;
 
-        const results = await Promise.all(plugin.getTransitionHooks().map((hook) => hook({route, req, log})));
+        const results = await Promise.all(plugin.getTransitionHooks().map((hook) => hook({ route, req, log })));
 
         for (const result of results) {
-            chai.expect(result).to.be.eql({type: 'continue'});
+            expect(result).toEqual({ type: 'continue' });
         }
 
-        chai.expect(log.info.calledWith(route.meta)).to.be.true;
+        expect(log.info).toHaveBeenCalledWith(route.meta, expect.any(String));
     });
 
     it('should redirect if req does not have a special cookie', async () => {
@@ -89,7 +72,7 @@ describe('Server transition hooks suite', () => {
             },
             url: '/some/url',
             hostname: 'example.com',
-            route: '/some/*'
+            route: '/some/*',
         };
 
         const req = {
@@ -98,10 +81,10 @@ describe('Server transition hooks suite', () => {
             },
         } as http.IncomingMessage;
 
-        const results = await Promise.all(plugin.getTransitionHooks().map((hook) => hook({route, req, log})));
+        const results = await Promise.all(plugin.getTransitionHooks().map((hook) => hook({ route, req, log })));
 
-        chai.expect(results).to.have.deep.members([{type: 'redirect', newLocation: '/'}]);
-        chai.expect(log.info.calledWith(route.meta)).to.be.true;
+        expect(results).toEqual([{ type: 'redirect', newLocation: '/' }]);
+        expect(log.info).toHaveBeenCalledWith(route.meta, expect.any(String));
     });
 
     it('should redirect if req does not have any cookies', async () => {
@@ -111,16 +94,16 @@ describe('Server transition hooks suite', () => {
             },
             url: '/some/url',
             hostname: 'example.com',
-            route: '/some/*'
+            route: '/some/*',
         };
 
         const req = {
             headers: {},
         } as http.IncomingMessage;
 
-        const results = await Promise.all(plugin.getTransitionHooks().map((hook) => hook({route, req, log})));
+        const results = await Promise.all(plugin.getTransitionHooks().map((hook) => hook({ route, req, log })));
 
-        chai.expect(results).to.have.deep.members([{type: 'redirect', newLocation: '/'}]);
-        chai.expect(log.info.calledWith(route.meta)).to.be.true;
+        expect(results).toEqual([{ type: 'redirect', newLocation: '/' }]);
+        expect(log.info).toHaveBeenCalledWith(route.meta, expect.any(String));
     });
 });

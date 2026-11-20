@@ -1,6 +1,4 @@
-import {
-    Plugin,
-} from '../../pluginManager/browser.types';
+import { Plugin } from '../../pluginManager/browser.types';
 
 import { IlcConfig, PlainObject } from '../common/browser.types';
 

@@ -1,31 +1,23 @@
-import { expect } from 'chai';
-import assert from 'assert';
-import { createSandbox, SinonSandbox, SinonStub } from 'sinon';
-
-import {
-    PluginManagerPublicApi,
-} from './browser.types';
-
-import { Plugin } from './common.types';
-
+import type { PluginManagerPublicApi } from './browser.types';
+import type { Plugin } from './common.types';
+import type { IlcReportingPlugin } from '../plugins/reporting/browser.types';
 import PluginManager from './browser';
-
 import * as reporting from '../plugins/reporting/browser';
+import defaultTransitionHooksPlugin from '../plugins/transitionHooks/browser';
 
-describe('Typescript usage suite', () => {
-    it('should be able to execute a test', () => {
-        assert.strictEqual(true, true);
-    });
-});
+vi.mock('../plugins/reporting/browser', async (importOriginal) => ({
+    ...(await importOriginal<typeof reporting>()),
+    reportingPluginsWrapper: vi.fn(),
+}));
+
+const reportingPluginsWrapperMock = vi.mocked(reporting.reportingPluginsWrapper);
 
 describe('PluginManager', () => {
     let pluginManager: PluginManagerPublicApi;
-  
+
     describe('when trying to get a plugin that is existed', () => {
-        let sandbox: SinonSandbox;
-        let wrappedReportingPlugin: SinonStub;
-        let reportingPluginsWrapperStub: SinonStub;
-     
+        let wrappedReportingPlugin: IlcReportingPlugin;
+
         const transitionHooksPlugin = {
             type: 'transitionHooks',
             property: 'propertyOfTransitionHooksPlugin',
@@ -81,18 +73,12 @@ describe('PluginManager', () => {
         ];
 
         beforeEach(() => {
-            sandbox = createSandbox();
-    
-            wrappedReportingPlugin = sandbox.stub();
-
-            reportingPluginsWrapperStub = sandbox.stub(reporting, 'reportingPluginsWrapper');
-            reportingPluginsWrapperStub.returns(wrappedReportingPlugin);
+            wrappedReportingPlugin = { type: 'reporting' } as IlcReportingPlugin;
+            reportingPluginsWrapperMock.mockReset().mockReturnValue(wrappedReportingPlugin);
         });
 
-        afterEach(() => sandbox.restore());
-
         describe('from context', () => {
-            function context(pluginPath: typeof PluginPaths[keyof typeof PluginPaths]) {
+            function context(pluginPath: (typeof PluginPaths)[keyof typeof PluginPaths]) {
                 return plugins[pluginPath];
             }
 
@@ -105,21 +91,22 @@ describe('PluginManager', () => {
             });
 
             it('should return transition hooks plugin', () => {
-                expect(pluginManager.getTransitionHooksPlugin()).to.be.equals(transitionHooksPlugin);
+                expect(pluginManager.getTransitionHooksPlugin()).toBe(transitionHooksPlugin);
             });
 
             it('should return reporting wrapper plugin', () => {
-                expect(pluginManager.getReportingPlugin()).to.be.equals(wrappedReportingPlugin);
+                expect(pluginManager.getReportingPlugin()).toBe(wrappedReportingPlugin);
             });
 
             it('should wrap reporting plugins and default console plugin with reportingPluginsWrapper', () => {
                 pluginManager.getReportingPlugin();
 
-                expect(reportingPluginsWrapperStub.calledOnceWithExactly([
+                expect(reportingPluginsWrapperMock).toHaveBeenCalledTimes(1);
+                expect(reportingPluginsWrapperMock).toHaveBeenCalledWith([
                     reportingPlugin,
                     reportingSecondPlugin,
                     reporting.consoleReportingPlugin,
-                ])).to.be.true;
+                ]);
             });
         });
 
@@ -129,21 +116,22 @@ describe('PluginManager', () => {
             });
 
             it('should return transition hooks plugin', () => {
-                expect(pluginManager.getTransitionHooksPlugin()).to.be.equals(transitionHooksPlugin);
+                expect(pluginManager.getTransitionHooksPlugin()).toBe(transitionHooksPlugin);
             });
 
             it('should return reporting wrapper plugin', () => {
-                expect(pluginManager.getReportingPlugin()).to.be.equals(wrappedReportingPlugin);
+                expect(pluginManager.getReportingPlugin()).toBe(wrappedReportingPlugin);
             });
 
             it('should wrap reporting plugins and default console plugin with reportingPluginsWrapper', () => {
                 pluginManager.getReportingPlugin();
 
-                expect(reportingPluginsWrapperStub.calledOnceWithExactly([
+                expect(reportingPluginsWrapperMock).toHaveBeenCalledTimes(1);
+                expect(reportingPluginsWrapperMock).toHaveBeenCalledWith([
                     reportingPlugin,
                     reportingSecondPlugin,
                     reporting.consoleReportingPlugin,
-                ])).to.be.true;
+                ]);
             });
         });
     });
@@ -162,26 +150,26 @@ describe('PluginManager', () => {
                 pluginManager = new PluginManager(context);
             });
 
-            it('should return null while getting transition hooks plugin', () => {
-                expect(pluginManager.getTransitionHooksPlugin()).to.be.eql(require('../plugins/transitionHooks/browser').default);
+            it('should return the default transition hooks plugin', () => {
+                expect(pluginManager.getTransitionHooksPlugin()).toEqual(defaultTransitionHooksPlugin);
             });
 
             it('should return reporting consoleReporting plugin', () => {
-                expect(pluginManager.getReportingPlugin()).to.be.equals(reporting.consoleReportingPlugin);
+                expect(pluginManager.getReportingPlugin()).toBe(reporting.consoleReportingPlugin);
             });
         });
 
         describe('from plugins', () => {
             beforeEach(() => {
-                pluginManager = new PluginManager(...[] as Plugin[]);
+                pluginManager = new PluginManager(...([] as Plugin[]));
             });
 
-            it('should return null while getting transition hooks plugin', () => {
-                expect(pluginManager.getTransitionHooksPlugin()).to.be.eql(require('../plugins/transitionHooks/browser').default);
+            it('should return the default transition hooks plugin', () => {
+                expect(pluginManager.getTransitionHooksPlugin()).toEqual(defaultTransitionHooksPlugin);
             });
 
             it('should return reporting consoleReporting plugin', () => {
-                expect(pluginManager.getReportingPlugin()).to.be.equals(reporting.consoleReportingPlugin);
+                expect(pluginManager.getReportingPlugin()).toBe(reporting.consoleReportingPlugin);
             });
         });
     });

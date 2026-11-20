@@ -1,4 +1,3 @@
-import { expect } from 'chai';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -30,9 +29,9 @@ describe('ilcPluginsPath', () => {
 
         const result = ilcPluginsPath(testDir);
 
-        expect(result).to.have.lengthOf(2);
-        expect(result).to.include(resolve(testDir, 'ilc-plugin-foo/browser.js'));
-        expect(result).to.include(resolve(testDir, 'ilc-plugin-bar/browser.js'));
+        expect(result).toHaveLength(2);
+        expect(result).toContain(resolve(testDir, 'ilc-plugin-foo/browser.js'));
+        expect(result).toContain(resolve(testDir, 'ilc-plugin-bar/browser.js'));
     });
 
     it('should find scoped plugins matching @*/ilc-plugin-* pattern', () => {
@@ -44,8 +43,8 @@ describe('ilcPluginsPath', () => {
 
         const result = ilcPluginsPath(testDir);
 
-        expect(result).to.have.lengthOf(1);
-        expect(result).to.include(resolve(testDir, '@scope/ilc-plugin-baz/browser.js'));
+        expect(result).toHaveLength(1);
+        expect(result).toContain(resolve(testDir, '@scope/ilc-plugin-baz/browser.js'));
     });
 
     it('should find both regular and scoped plugins', () => {
@@ -62,15 +61,15 @@ describe('ilcPluginsPath', () => {
 
         const result = ilcPluginsPath(testDir);
 
-        expect(result).to.have.lengthOf(2);
-        expect(result).to.include(resolve(testDir, 'ilc-plugin-regular/browser.js'));
-        expect(result).to.include(resolve(testDir, '@company/ilc-plugin-scoped/browser.js'));
+        expect(result).toHaveLength(2);
+        expect(result).toContain(resolve(testDir, 'ilc-plugin-regular/browser.js'));
+        expect(result).toContain(resolve(testDir, '@company/ilc-plugin-scoped/browser.js'));
     });
 
     it('should return empty array when no plugins found', () => {
         const result = ilcPluginsPath(testDir);
 
-        expect(result).to.be.an('array').that.is.empty;
+        expect(result).toEqual([]);
     });
 
     it('should return absolute paths', () => {
@@ -80,8 +79,8 @@ describe('ilcPluginsPath', () => {
 
         const result = ilcPluginsPath(testDir);
 
-        expect(result).to.have.lengthOf(1);
-        expect(result[0]).to.equal(resolve(testDir, 'ilc-plugin-test/browser.js'));
-        expect(result[0]).to.match(/^\/|^[A-Z]:\\/); // Starts with / (Unix) or drive letter (Windows)
+        expect(result).toHaveLength(1);
+        expect(result[0]).toBe(resolve(testDir, 'ilc-plugin-test/browser.js'));
+        expect(result[0]).toMatch(/^\/|^[A-Z]:\\/); // Starts with / (Unix) or drive letter (Windows)
     });
 });

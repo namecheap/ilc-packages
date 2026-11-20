@@ -1,16 +1,10 @@
 type Primitive = bigint | boolean | null | number | string | string | undefined;
 
-type PlainObjectValue =
-  | Primitive
-  | Primitive[]
-  | PlainObject
-  | PlainObjectArray;
+type PlainObjectValue = Primitive | Primitive[] | PlainObject | PlainObject[];
 
 export declare interface PlainObject {
-  [key: string]: PlainObjectValue;
+    [key: string]: PlainObjectValue;
 }
-
-interface PlainObjectArray extends Array<PlainObject> {}
 
 interface IlcRegistryAppConfig {
     spaBundle: string;
@@ -36,7 +30,7 @@ interface IlcRouteSlotConfig {
 interface IlcRouteConfig {
     slots: {
         [key: string]: IlcRouteSlotConfig;
-    },
+    };
     meta: PlainObject;
     route: string;
     next: boolean;
@@ -47,7 +41,7 @@ type IlcSetting = PlainObject;
 
 type IlcSettings = {
     [key: string]: IlcSetting;
-}
+};
 
 type IlcSharedLibConfig = string;
 
@@ -56,11 +50,11 @@ interface IlcSharedLibsConfig {
 }
 
 export declare interface IlcRegistryConfig {
-    apps: IlcRegistryAppsConfig,
+    apps: IlcRegistryAppsConfig;
     routes: IlcRouteConfig[];
     specialRoutes: {
         [key: string]: Omit<IlcRouteConfig, 'route'>;
-    },
+    };
     settings: IlcSettings;
     sharedLibs: IlcSharedLibsConfig;
 }

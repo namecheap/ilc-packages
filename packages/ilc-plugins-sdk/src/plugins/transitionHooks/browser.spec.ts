@@ -1,400 +1,235 @@
-import chai from 'chai';
-import sinon from 'sinon';
+import type { Mock } from 'vitest';
 
 import plugin, { cookieName } from './browser';
 
+interface DialogMock {
+    innerHTML: string;
+    addEventListener: (event: string, callback: () => void) => void;
+    showModal: Mock;
+    remove: Mock;
+    returnValue: string;
+}
+
+interface DocumentMock {
+    cookie: string;
+    body: { appendChild: Mock };
+    createElement: Mock;
+}
+
+function transition(meta: Record<string, unknown>, navigate: Mock = vi.fn()) {
+    return {
+        route: {
+            url: '/test',
+            meta,
+            hostname: 'example.com',
+            route: '/test',
+        },
+        prevRoute: {
+            url: '/prev',
+            meta: {},
+            hostname: 'example.com',
+            route: '/prev',
+        },
+        navigate,
+    };
+}
+
 describe('transitionHooks browser plugin', () => {
-    let sandbox: sinon.SinonSandbox;
-    let originalDocument: any;
-    let consoleLogStub: sinon.SinonStub;
+    let consoleLogStub: Mock;
+    let documentMock: DocumentMock;
 
     beforeEach(() => {
-        sandbox = sinon.createSandbox();
-        consoleLogStub = sandbox.stub(console, 'log');
+        consoleLogStub = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-        // Save original document if it exists
-        originalDocument = (global as any).document;
-
-        // Create minimal document mock
-        (global as any).document = {
+        // Minimal document mock: the plugin only touches the cookie, the body and createElement
+        documentMock = {
             cookie: '',
             body: {
-                appendChild: sinon.stub(),
+                appendChild: vi.fn(),
             },
-            createElement: sinon.stub(),
+            createElement: vi.fn(),
         };
+        vi.stubGlobal('document', documentMock);
     });
 
     afterEach(() => {
-        sandbox.restore();
-
-        // Restore original document
-        if (originalDocument !== undefined) {
-            (global as any).document = originalDocument;
-        } else {
-            delete (global as any).document;
-        }
+        vi.unstubAllGlobals();
+        vi.restoreAllMocks();
     });
 
     it('should have correct plugin type', () => {
-        chai.expect(plugin.type).to.equal('transitionHooks');
+        expect(plugin.type).toBe('transitionHooks');
     });
 
     it('should export cookieName', () => {
-        chai.expect(cookieName).to.equal('ilc-plugin-transition-hooks-sample');
+        expect(cookieName).toBe('ilc-plugin-transition-hooks-sample');
     });
 
     it('should return an array of hooks from getTransitionHooks', () => {
         const hooks = plugin.getTransitionHooks();
-        chai.expect(hooks).to.be.an('array');
-        chai.expect(hooks).to.have.lengthOf(1);
-        chai.expect(hooks[0]).to.be.a('function');
+        expect(Array.isArray(hooks)).toBe(true);
+        expect(hooks).toHaveLength(1);
+        expect(hooks[0]).toBeTypeOf('function');
     });
 
     describe('transition hook', () => {
-        it('should log route meta when hook is called', () => {
-            const hooks = plugin.getTransitionHooks();
-            const hook = hooks[0];
-
-            const mockTransition = {
-                route: {
-                    url: '/test',
-                    meta: { protected: false, customField: 'value' },
-                    hostname: 'example.com',
-                    route: '/test',
+        function dialogMock(returnValue: string): DialogMock & { closeCallback: (() => void) | null } {
+            const dialog = {
+                innerHTML: '',
+                closeCallback: null as (() => void) | null,
+                addEventListener: (event: string, callback: () => void) => {
+                    if (event === 'close') {
+                        dialog.closeCallback = callback;
+                    }
                 },
-                prevRoute: {
-                    url: '/prev',
-                    meta: {},
-                    hostname: 'example.com',
-                    route: '/prev',
-                },
-                navigate: sinon.stub(),
+                showModal: vi.fn(),
+                remove: vi.fn(),
+                returnValue,
             };
+            return dialog;
+        }
 
-            hook(mockTransition);
+        it('should log route meta when hook is called', () => {
+            const hook = plugin.getTransitionHooks()[0]!;
 
-            chai.expect(consoleLogStub.calledOnce).to.be.true;
-            chai.expect(consoleLogStub.firstCall.args[0]).to.equal('Browser transition hook with index #0 called with meta:');
-            chai.expect(consoleLogStub.firstCall.args[1]).to.deep.equal({ protected: false, customField: 'value' });
+            hook(transition({ protected: false, customField: 'value' }));
+
+            expect(consoleLogStub).toHaveBeenCalledTimes(1);
+            expect(consoleLogStub).toHaveBeenCalledWith('Browser transition hook with index #0 called with meta:', {
+                protected: false,
+                customField: 'value',
+            });
         });
 
         it('should return continue when route is not protected', () => {
-            const hooks = plugin.getTransitionHooks();
-            const hook = hooks[0];
+            const hook = plugin.getTransitionHooks()[0]!;
 
-            const mockTransition = {
-                route: {
-                    url: '/test',
-                    meta: { protected: false },
-                    hostname: 'example.com',
-                    route: '/test',
-                },
-                prevRoute: {
-                    url: '/prev',
-                    meta: {},
-                    hostname: 'example.com',
-                    route: '/prev',
-                },
-                navigate: sinon.stub(),
-            };
+            const result = hook(transition({ protected: false }));
 
-            const result = hook(mockTransition);
-
-            chai.expect(result).to.deep.equal({ type: 'continue' });
-            chai.expect(consoleLogStub.calledOnce).to.be.true;
+            expect(result).toEqual({ type: 'continue' });
+            expect(consoleLogStub).toHaveBeenCalledTimes(1);
         });
 
         it('should return continue when protected is not set (undefined)', () => {
-            const hooks = plugin.getTransitionHooks();
-            const hook = hooks[0];
+            const hook = plugin.getTransitionHooks()[0]!;
 
-            const mockTransition = {
-                route: {
-                    url: '/test',
-                    meta: {},
-                    hostname: 'example.com',
-                    route: '/test',
-                },
-                prevRoute: {
-                    url: '/prev',
-                    meta: {},
-                    hostname: 'example.com',
-                    route: '/prev',
-                },
-                navigate: sinon.stub(),
-            };
+            const result = hook(transition({}));
 
-            const result = hook(mockTransition);
-
-            chai.expect(result).to.deep.equal({ type: 'continue' });
+            expect(result).toEqual({ type: 'continue' });
         });
 
         it('should return continue when cookie exists for protected route', () => {
-            const hooks = plugin.getTransitionHooks();
-            const hook = hooks[0];
+            const hook = plugin.getTransitionHooks()[0]!;
+            const navigateStub = vi.fn();
 
-            const navigateStub = sinon.stub();
-            const mockTransition = {
-                route: {
-                    url: '/test',
-                    meta: { protected: true },
-                    hostname: 'example.com',
-                    route: '/test',
-                },
-                prevRoute: {
-                    url: '/prev',
-                    meta: {},
-                    hostname: 'example.com',
-                    route: '/prev',
-                },
-                navigate: navigateStub,
-            };
+            documentMock.cookie = `${cookieName}=skip; path=/;`;
 
-            // Set document.cookie to include our cookie
-            (global as any).document.cookie = `${cookieName}=skip; path=/;`;
+            const result = hook(transition({ protected: true }, navigateStub));
 
-            const result = hook(mockTransition);
-
-            chai.expect(result).to.deep.equal({ type: 'continue' });
-            // Should not have created a dialog or called navigate
-            chai.expect(((global as any).document.createElement as sinon.SinonStub).called).to.be.false;
-            chai.expect(navigateStub.called).to.be.false;
+            expect(result).toEqual({ type: 'continue' });
+            // Neither a dialog nor a navigation when the cookie is already there
+            expect(documentMock.createElement).not.toHaveBeenCalled();
+            expect(navigateStub).not.toHaveBeenCalled();
         });
 
         it('should return stop-navigation and create dialog when protected without cookie', () => {
-            const hooks = plugin.getTransitionHooks();
-            const hook = hooks[0];
+            const hook = plugin.getTransitionHooks()[0]!;
 
-            const mockTransition = {
-                route: {
-                    url: '/test',
-                    meta: { protected: true },
-                    hostname: 'example.com',
-                    route: '/test',
-                },
-                prevRoute: {
-                    url: '/prev',
-                    meta: {},
-                    hostname: 'example.com',
-                    route: '/prev',
-                },
-                navigate: sinon.stub(),
-            };
+            documentMock.cookie = 'other=value';
 
-            // Set document.cookie to not include our cookie
-            (global as any).document.cookie = 'other=value';
-
-            // Mock dialog
-            const mockDialog = {
+            const dialog = {
                 innerHTML: '',
-                addEventListener: sandbox.stub(),
-                showModal: sandbox.stub(),
-                remove: sandbox.stub(),
+                addEventListener: vi.fn(),
+                showModal: vi.fn(),
+                remove: vi.fn(),
                 returnValue: '',
             };
+            documentMock.createElement.mockImplementation((tag: string) => (tag === 'dialog' ? dialog : undefined));
 
-            ((global as any).document.createElement as sinon.SinonStub).withArgs('dialog').returns(mockDialog);
+            const result = hook(transition({ protected: true }));
 
-            const result = hook(mockTransition);
-
-            chai.expect(result).to.deep.equal({ type: 'stop-navigation' });
-            chai.expect(((global as any).document.createElement as sinon.SinonStub).calledOnceWith('dialog')).to.be.true;
-            chai.expect(((global as any).document.body.appendChild as sinon.SinonStub).calledOnceWith(mockDialog)).to.be.true;
-            chai.expect(mockDialog.showModal.calledOnce).to.be.true;
-            chai.expect(mockDialog.addEventListener.calledOnceWith('close', sinon.match.func)).to.be.true;
+            expect(result).toEqual({ type: 'stop-navigation' });
+            expect(documentMock.createElement).toHaveBeenCalledTimes(1);
+            expect(documentMock.createElement).toHaveBeenCalledWith('dialog');
+            expect(documentMock.body.appendChild).toHaveBeenCalledTimes(1);
+            expect(documentMock.body.appendChild).toHaveBeenCalledWith(dialog);
+            expect(dialog.showModal).toHaveBeenCalledTimes(1);
+            expect(dialog.addEventListener).toHaveBeenCalledTimes(1);
+            expect(dialog.addEventListener).toHaveBeenCalledWith('close', expect.any(Function));
         });
 
         it('should set correct dialog innerHTML with confirmation message', () => {
-            const hooks = plugin.getTransitionHooks();
-            const hook = hooks[0];
+            const hook = plugin.getTransitionHooks()[0]!;
 
-            const mockTransition = {
-                route: {
-                    url: '/test',
-                    meta: { protected: true },
-                    hostname: 'example.com',
-                    route: '/test',
-                },
-                prevRoute: {
-                    url: '/prev',
-                    meta: {},
-                    hostname: 'example.com',
-                    route: '/prev',
-                },
-                navigate: sinon.stub(),
-            };
+            documentMock.cookie = 'other=value';
 
-            (global as any).document.cookie = 'other=value';
+            const dialog = dialogMock('');
+            documentMock.createElement.mockImplementation((tag: string) => (tag === 'dialog' ? dialog : undefined));
 
-            const mockDialog = {
-                innerHTML: '',
-                addEventListener: sandbox.stub(),
-                showModal: sandbox.stub(),
-                remove: sandbox.stub(),
-                returnValue: '',
-            };
+            hook(transition({ protected: true }));
 
-            ((global as any).document.createElement as sinon.SinonStub).withArgs('dialog').returns(mockDialog);
-
-            hook(mockTransition);
-
-            chai.expect(mockDialog.innerHTML).to.include('Are you sure you want to proceed?');
-            chai.expect(mockDialog.innerHTML).to.include('This will add cookie to remember your choice');
-            chai.expect(mockDialog.innerHTML).to.include('<form method="dialog">');
-            chai.expect(mockDialog.innerHTML).to.include('<button value="no">Cancel</button>');
-            chai.expect(mockDialog.innerHTML).to.include('<button id="confirmBtn" value="yes">Confirm</button>');
+            expect(dialog.innerHTML).toContain('Are you sure you want to proceed?');
+            expect(dialog.innerHTML).toContain('This will add cookie to remember your choice');
+            expect(dialog.innerHTML).toContain('<form method="dialog">');
+            expect(dialog.innerHTML).toContain('<button value="no">Cancel</button>');
+            expect(dialog.innerHTML).toContain('<button id="confirmBtn" value="yes">Confirm</button>');
         });
 
         it('should set cookie and navigate when dialog is confirmed with yes', () => {
-            const hooks = plugin.getTransitionHooks();
-            const hook = hooks[0];
+            const hook = plugin.getTransitionHooks()[0]!;
+            const navigateStub = vi.fn();
 
-            const navigateStub = sinon.stub();
-            const mockTransition = {
-                route: {
-                    url: '/test',
-                    meta: { protected: true },
-                    hostname: 'example.com',
-                    route: '/test',
-                },
-                prevRoute: {
-                    url: '/prev',
-                    meta: {},
-                    hostname: 'example.com',
-                    route: '/prev',
-                },
-                navigate: navigateStub,
-            };
+            documentMock.cookie = 'other=value';
 
-            // Set initial cookie value
-            (global as any).document.cookie = 'other=value';
+            const dialog = dialogMock('yes');
+            documentMock.createElement.mockImplementation((tag: string) => (tag === 'dialog' ? dialog : undefined));
 
-            // Mock dialog with callback capture
-            let closeCallback: Function | null = null;
-            const mockDialog = {
-                innerHTML: '',
-                addEventListener: (event: string, callback: Function) => {
-                    if (event === 'close') {
-                        closeCallback = callback;
-                    }
-                },
-                showModal: sandbox.stub(),
-                remove: sandbox.stub(),
-                returnValue: 'yes',
-            };
+            const result = hook(transition({ protected: true }, navigateStub));
 
-            ((global as any).document.createElement as sinon.SinonStub).withArgs('dialog').returns(mockDialog);
+            expect(result).toEqual({ type: 'stop-navigation' });
+            expect(dialog.closeCallback).not.toBeNull();
 
-            const result = hook(mockTransition);
+            dialog.closeCallback!();
 
-            chai.expect(result).to.deep.equal({ type: 'stop-navigation' });
-            chai.expect(closeCallback).to.not.be.null;
-
-            // Trigger the close callback
-            closeCallback!();
-
-            chai.expect((global as any).document.cookie).to.equal(`${cookieName}=skip; path=/;`);
-            chai.expect(navigateStub.calledOnce).to.be.true;
-            chai.expect(navigateStub.firstCall.args[0]).to.equal('/test');
-            chai.expect(mockDialog.remove.calledOnce).to.be.true;
+            expect(documentMock.cookie).toBe(`${cookieName}=skip; path=/;`);
+            expect(navigateStub).toHaveBeenCalledTimes(1);
+            expect(navigateStub).toHaveBeenCalledWith('/test');
+            expect(dialog.remove).toHaveBeenCalledTimes(1);
         });
 
         it('should not set cookie or navigate when dialog is canceled', () => {
-            const hooks = plugin.getTransitionHooks();
-            const hook = hooks[0];
+            const hook = plugin.getTransitionHooks()[0]!;
+            const navigateStub = vi.fn();
 
-            const navigateStub = sinon.stub();
-            const mockTransition = {
-                route: {
-                    url: '/test',
-                    meta: { protected: true },
-                    hostname: 'example.com',
-                    route: '/test',
-                },
-                prevRoute: {
-                    url: '/prev',
-                    meta: {},
-                    hostname: 'example.com',
-                    route: '/prev',
-                },
-                navigate: navigateStub,
-            };
-
-            // Set initial cookie value
             const initialCookie = 'other=value';
-            (global as any).document.cookie = initialCookie;
+            documentMock.cookie = initialCookie;
 
-            let closeCallback: Function | null = null;
-            const mockDialog = {
-                innerHTML: '',
-                addEventListener: (event: string, callback: Function) => {
-                    if (event === 'close') {
-                        closeCallback = callback;
-                    }
-                },
-                showModal: sandbox.stub(),
-                remove: sandbox.stub(),
-                returnValue: 'no',
-            };
+            const dialog = dialogMock('no');
+            documentMock.createElement.mockImplementation((tag: string) => (tag === 'dialog' ? dialog : undefined));
 
-            ((global as any).document.createElement as sinon.SinonStub).withArgs('dialog').returns(mockDialog);
+            hook(transition({ protected: true }, navigateStub));
 
-            hook(mockTransition);
+            expect(dialog.closeCallback).not.toBeNull();
 
-            chai.expect(closeCallback).to.not.be.null;
+            dialog.closeCallback!();
 
-            // Trigger the close callback with 'no' returnValue
-            closeCallback!();
-
-            // Cookie should remain unchanged
-            chai.expect((global as any).document.cookie).to.equal(initialCookie);
-            chai.expect(navigateStub.called).to.be.false;
-            chai.expect(mockDialog.remove.calledOnce).to.be.true;
+            expect(documentMock.cookie).toBe(initialCookie);
+            expect(navigateStub).not.toHaveBeenCalled();
+            expect(dialog.remove).toHaveBeenCalledTimes(1);
         });
 
         it('should remove dialog after close regardless of confirmation result', () => {
-            const hooks = plugin.getTransitionHooks();
-            const hook = hooks[0];
+            const hook = plugin.getTransitionHooks()[0]!;
 
-            const mockTransition = {
-                route: {
-                    url: '/test',
-                    meta: { protected: true },
-                    hostname: 'example.com',
-                    route: '/test',
-                },
-                prevRoute: {
-                    url: '/prev',
-                    meta: {},
-                    hostname: 'example.com',
-                    route: '/prev',
-                },
-                navigate: sinon.stub(),
-            };
+            documentMock.cookie = '';
 
-            (global as any).document.cookie = '';
+            const dialog = dialogMock('anything');
+            documentMock.createElement.mockImplementation((tag: string) => (tag === 'dialog' ? dialog : undefined));
 
-            let closeCallback: Function | null = null;
-            const mockDialog = {
-                innerHTML: '',
-                addEventListener: (event: string, callback: Function) => {
-                    if (event === 'close') {
-                        closeCallback = callback;
-                    }
-                },
-                showModal: sandbox.stub(),
-                remove: sandbox.stub(),
-                returnValue: 'anything',
-            };
+            hook(transition({ protected: true }));
+            dialog.closeCallback!();
 
-            ((global as any).document.createElement as sinon.SinonStub).withArgs('dialog').returns(mockDialog);
-
-            hook(mockTransition);
-            closeCallback!();
-
-            // Dialog should always be removed
-            chai.expect(mockDialog.remove.calledOnce).to.be.true;
+            expect(dialog.remove).toHaveBeenCalledTimes(1);
         });
     });
 });
