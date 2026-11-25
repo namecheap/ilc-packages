@@ -1,6 +1,6 @@
 {
     "name": "ilc-sdk",
-    "version": "7.0.0",
+    "version": "8.0.0",
     "description": "SDK for app development with Isomorphic Layout Composer",
     "keywords": [
         "ilc",

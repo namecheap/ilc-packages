@@ -1,5 +1,11 @@
 # ilc-registry-sdk
 
+## 0.3.2
+
+### Patch Changes
+
+- [#4](https://github.com/namecheap/ilc-packages/pull/4) [`4dccb6e`](https://github.com/namecheap/ilc-packages/commit/4dccb6ef92acb52452bcdb7a394d7f108025dd97) Thanks [@stas-nc](https://github.com/stas-nc)! - TypeScript build info files are no longer included in the published tarball.
+
 ## 0.3.1
 
 ### Patch Changes
