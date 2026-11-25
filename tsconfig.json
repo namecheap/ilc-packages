@@ -5,6 +5,7 @@
     "references": [
         { "path": "./packages/ilc-adapter-react" },
         { "path": "./packages/ilc-registry-sdk" },
-        { "path": "./packages/ilc-sdk" }
+        { "path": "./packages/ilc-sdk" },
+        { "path": "./packages/ilc-plugins-sdk" }
     ]
 }
