@@ -1,0 +1,78 @@
+{
+    "name": "ilc-plugins-sdk",
+    "version": "3.1.0",
+    "description": "Interfaces and base classes for developers of ILC plugins",
+    "keywords": [
+        "ilc",
+        "micro-frontends",
+        "plugins",
+        "sdk"
+    ],
+    "author": "Namecheap, Inc",
+    "license": "Apache-2.0",
+    "homepage": "https://github.com/namecheap/ilc-packages/tree/master/packages/ilc-plugins-sdk#readme",
+    "bugs": {
+        "url": "https://github.com/namecheap/ilc-packages/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/namecheap/ilc-packages.git",
+        "directory": "packages/ilc-plugins-sdk"
+    },
+    "type": "commonjs",
+    "main": "dist/server.js",
+    "types": "dist/server.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/server.d.ts",
+            "default": "./dist/server.js"
+        },
+        "./browser": {
+            "types": "./dist/browser.d.ts",
+            "default": "./dist/browser.js"
+        },
+        "./webpack": {
+            "types": "./dist/webpack.d.ts",
+            "default": "./dist/webpack.js"
+        }
+    },
+    "files": [
+        "dist",
+        "!dist/*.tsbuildinfo",
+        "browser.js",
+        "browser.d.ts",
+        "webpack.js",
+        "webpack.d.ts"
+    ],
+    "engines": {
+        "node": ">=22"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "scripts": {
+        "build": "tsc -b tsconfig.lib.json",
+        "clean": "rm -rf dist",
+        "test": "vitest run",
+        "typecheck": "tsc -b"
+    },
+    "dependencies": {
+        "http-headers": "^3.0.2",
+        "hyperid": "^3.3.0",
+        "pino": "^10.1.0"
+    },
+    "peerDependencies": {
+        "webpack": "^5.0.0"
+    },
+    "peerDependenciesMeta": {
+        "webpack": {
+            "optional": true
+        }
+    },
+    "devDependencies": {
+        "@types/http-headers": "^3.0.4",
+        "@types/split2": "^4.2.3",
+        "split2": "^4.2.0",
+        "webpack": "^5.104.0"
+    }
+}

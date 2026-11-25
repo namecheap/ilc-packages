@@ -5,6 +5,7 @@ Libraries, SDKs and helpers for [ILC](https://github.com/namecheap/ilc). Each pa
 | Package                                         | Description                       | npm                                                                                                     |
 | ----------------------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | [`ilc-registry-sdk`](packages/ilc-registry-sdk) | Client for the ILC registry API.  | [![npm](https://img.shields.io/npm/v/ilc-registry-sdk)](https://www.npmjs.com/package/ilc-registry-sdk) |
+| [`ilc-plugins-sdk`](packages/ilc-plugins-sdk)   | SDK for ILC plugin development.   | [![npm](https://img.shields.io/npm/v/ilc-plugins-sdk)](https://www.npmjs.com/package/ilc-plugins-sdk)   |
 | [`ilc-sdk`](packages/ilc-sdk)                   | SDK for app development with ILC. | [![npm](https://img.shields.io/npm/v/ilc-sdk)](https://www.npmjs.com/package/ilc-sdk)                   |
 
 ## Quick start
